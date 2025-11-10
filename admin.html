@@ -1,0 +1,408 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Panel admin — Clínica Moguz</title>
+  <link rel="stylesheet" href="https://unpkg.com/sakura.css/css/sakura.css" integrity="sha384-Lhbbgiu5Hn7PrYL19qhSJECyC7wfqiF5fNGLS3XJiBHkEQUGTMKmqOA7jV8J3W9o" crossorigin="anonymous">
+  <style>
+    body{max-width:1100px;margin:0 auto;padding:24px;background:#f4f6fb;}
+    header{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;}
+    .badge{display:inline-block;padding:4px 10px;border-radius:999px;background:#fee2e2;color:#991b1b;font-size:12px;margin-left:8px;}
+    .card{background:white;border-radius:12px;padding:18px;margin-bottom:24px;box-shadow:0 4px 12px rgba(15,23,42,0.08);}
+    table{width:100%;border-collapse:collapse;}
+    th,td{padding:10px;border-bottom:1px solid #e2e8f0;text-align:left;font-size:14px;}
+    th{background:#f8fafc;}
+    select,input,textarea{width:100%;padding:8px;border:1px solid #cbd5f5;border-radius:8px;}
+    button{padding:8px 14px;border-radius:8px;border:none;background:#9c305c;color:white;font-weight:600;cursor:pointer;}
+    button.secondary{background:#6366f1;}
+    button.ghost{background:white;color:#9c305c;border:1px solid #9c305c;}
+    .table-actions{display:flex;gap:8px;flex-wrap:wrap;}
+    .status-pill{display:inline-block;padding:4px 9px;border-radius:999px;font-size:12px;font-weight:600;}
+    .status-pendiente{background:#fff4cd;color:#92400e;}
+    .status-confirmado{background:#dcfce7;color:#166534;}
+    .status-cancelado{background:#fee2e2;color:#991b1b;}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px;}
+    .muted{color:#6b7280;font-size:14px;}
+    .warning{background:#fef3c7;color:#92400e;padding:12px;border-radius:8px;margin-bottom:20px;}
+    .error{background:#fee2e2;color:#991b1b;padding:12px;border-radius:8px;margin-bottom:20px;}
+    .success{background:#dcfce7;color:#166534;padding:12px;border-radius:8px;margin-bottom:20px;}
+    .hidden{display:none!important;}
+  </style>
+  <script src="https://unpkg.com/@supabase/supabase-js"></script>
+  <script>
+    const SUPABASE_URL = 'https://rfcvgihqcyzvpofgddzh.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJmY3ZnaWhxY3l6dnBvZmdkZHpoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI3NTEzODUsImV4cCI6MjA3ODMyNzM4NX0.Cy508tNLMQLUtGupFcrHDTBa1MnfkvMF9Xp0z-3jJgo';
+    const supabase = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
+  </script>
+</head>
+<body>
+  <header>
+    <div>
+      <h1 style="margin:0;">Panel administrativo</h1>
+      <div class="muted">Gestión de turnos, profesionales y tratamientos</div>
+    </div>
+    <div>
+      <button id="logout-btn" class="ghost">Cerrar sesión</button>
+      <a href="index.html" style="margin-left:12px;text-decoration:none;">← Volver al sitio público</a>
+    </div>
+  </header>
+
+  <div id="alerts"></div>
+
+  <section id="auth-guard" class="warning hidden">
+    Necesitás iniciar sesión como administrador para acceder a este panel.
+    <div style="margin-top:12px;">
+      <button id="login-btn">Enviar enlace mágico</button>
+    </div>
+  </section>
+
+  <section id="content" class="hidden">
+    <div class="card">
+      <h2>Resumen rápido</h2>
+      <div class="grid" id="summary-grid">
+        <div class="card" style="box-shadow:none;border:1px solid #e2e8f0;">
+          <strong>Total turnos</strong>
+          <div id="summary-turns" style="font-size:28px;margin-top:6px;">0</div>
+          <div class="muted">Incluye todos los estados</div>
+        </div>
+        <div class="card" style="box-shadow:none;border:1px solid #e2e8f0;">
+          <strong>Turnos pendientes</strong>
+          <div id="summary-pending" style="font-size:28px;margin-top:6px;">0</div>
+          <div class="muted">Por confirmar</div>
+        </div>
+        <div class="card" style="box-shadow:none;border:1px solid #e2e8f0;">
+          <strong>Profesionales</strong>
+          <div id="summary-pros" style="font-size:28px;margin-top:6px;">0</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <h2 style="margin:0;">Turnos</h2>
+        <div class="table-actions">
+          <select id="filter-status">
+            <option value="">Todos los estados</option>
+            <option value="pendiente">Pendiente</option>
+            <option value="confirmado">Confirmado</option>
+            <option value="cancelado">Cancelado</option>
+          </select>
+          <input type="date" id="filter-from" />
+          <input type="date" id="filter-to" />
+          <button id="refresh-turns" class="secondary">Actualizar</button>
+        </div>
+      </div>
+      <div style="overflow:auto;">
+        <table id="turns-table">
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Hora</th>
+              <th>Paciente</th>
+              <th>Tipo</th>
+              <th>Profesional</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td colspan="7" class="muted">Cargando...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+          <h2 style="margin:0;">Profesionales</h2>
+          <button id="refresh-pros" class="secondary">Actualizar</button>
+        </div>
+        <div id="pros-list" class="muted">Cargando...</div>
+      </div>
+
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+          <h2 style="margin:0;">Tratamientos</h2>
+          <button id="refresh-treatments" class="secondary">Actualizar</button>
+        </div>
+        <div id="treatments-list" class="muted">Cargando...</div>
+      </div>
+    </div>
+  </section>
+
+  <template id="turn-row-template">
+    <tr>
+      <td data-field="date"></td>
+      <td data-field="time"></td>
+      <td data-field="patient"></td>
+      <td data-field="type"></td>
+      <td data-field="professional"></td>
+      <td data-field="status"></td>
+      <td data-field="actions"></td>
+    </tr>
+  </template>
+
+  <script>
+    const alertsNode = document.getElementById('alerts');
+    const authGuard = document.getElementById('auth-guard');
+    const contentNode = document.getElementById('content');
+    const loginBtn = document.getElementById('login-btn');
+    const logoutBtn = document.getElementById('logout-btn');
+    const filterStatus = document.getElementById('filter-status');
+    const filterFrom = document.getElementById('filter-from');
+    const filterTo = document.getElementById('filter-to');
+    const turnsTableBody = document.querySelector('#turns-table tbody');
+    const prosList = document.getElementById('pros-list');
+    const treatmentsList = document.getElementById('treatments-list');
+    const summaryTurns = document.getElementById('summary-turns');
+    const summaryPending = document.getElementById('summary-pending');
+    const summaryPros = document.getElementById('summary-pros');
+    const rowTemplate = document.getElementById('turn-row-template');
+
+    let session = null;
+    let profile = null;
+
+    function showAlert(type, message) {
+      const div = document.createElement('div');
+      div.className = type;
+      div.textContent = message;
+      alertsNode.appendChild(div);
+      setTimeout(()=>div.remove(), 4000);
+    }
+
+    function requireSupabase(){
+      if(!supabase){
+        showAlert('error','Supabase no está disponible. Revisa la configuración de claves.');
+        return false;
+      }
+      return true;
+    }
+
+    async function ensureAdmin(){
+      if(!requireSupabase()) return false;
+      const { data: { session: current }, error } = await supabase.auth.getSession();
+      if(error){
+        showAlert('error', 'No se pudo obtener la sesión.');
+        return false;
+      }
+      session = current;
+      if(!session){
+        authGuard.classList.remove('hidden');
+        contentNode.classList.add('hidden');
+        return false;
+      }
+      const { data, error: profileError } = await supabase
+        .from('profiles')
+        .select('id, full_name, role')
+        .eq('id', session.user.id)
+        .maybeSingle();
+      if(profileError){
+        showAlert('error','No se pudo obtener el perfil del usuario.');
+        return false;
+      }
+      profile = data;
+      if(!profile || profile.role !== 'admin'){
+        authGuard.classList.remove('hidden');
+        authGuard.innerHTML = 'Tu usuario no tiene permisos de administrador. Contactá al dueño de la clínica.';
+        contentNode.classList.add('hidden');
+        return false;
+      }
+      authGuard.classList.add('hidden');
+      contentNode.classList.remove('hidden');
+      return true;
+    }
+
+    function statusLabel(status){
+      const normalized = status || 'pendiente';
+      return `<span class="status-pill status-${normalized}">${normalized.charAt(0).toUpperCase()+normalized.slice(1)}</span>`;
+    }
+
+    async function loadTreatments(){
+      if(!requireSupabase()) return;
+      treatmentsList.textContent = 'Cargando...';
+      const { data, error } = await supabase.from('treatments').select('*').order('name');
+      if(error){
+        treatmentsList.innerHTML = `<div class="error">No se pudieron cargar los tratamientos. ${error.message}</div>`;
+        return;
+      }
+      if(!data.length){
+        treatmentsList.textContent = 'No hay tratamientos cargados.';
+        return;
+      }
+      treatmentsList.innerHTML = data.map(t=>`
+        <div style="border-bottom:1px solid #e2e8f0;padding:8px 0;">
+          <strong>${t.name}</strong><br>
+          <span class="muted">${t.specialty}</span>
+        </div>
+      `).join('');
+    }
+
+    async function loadProfessionals(){
+      if(!requireSupabase()) return;
+      prosList.textContent = 'Cargando...';
+      const { data, error } = await supabase.from('professionals').select('*').order('name');
+      if(error){
+        prosList.innerHTML = `<div class="error">No se pudieron cargar los profesionales. ${error.message}</div>`;
+        return;
+      }
+      if(!data.length){
+        prosList.textContent = 'No hay profesionales cargados.';
+        return;
+      }
+      summaryPros.textContent = data.length;
+      prosList.innerHTML = data.map(p=>`
+        <div style="border-bottom:1px solid #e2e8f0;padding:8px 0;">
+          <strong>${p.name}</strong><br>
+          <span class="muted">${p.specialty}</span><br>
+          <span class="muted">${p.bio || ''}</span>
+        </div>
+      `).join('');
+      return data;
+    }
+
+    function buildProfessionalOptions(pros){
+      const options = ['<option value="">Sin asignar</option>'];
+      pros.forEach(p=>{
+        options.push(`<option value="${p.name}">${p.name} — ${p.specialty}</option>`);
+      });
+      return options.join('');
+    }
+
+    async function loadTurns(){
+      if(!requireSupabase()) return;
+      turnsTableBody.innerHTML = '<tr><td colspan="7" class="muted">Cargando...</td></tr>';
+      let query = supabase.from('turns').select('*').order('date', { ascending: true }).order('time',{ ascending:true });
+      if(filterStatus.value) query = query.eq('status', filterStatus.value);
+      if(filterFrom.value) query = query.gte('date', filterFrom.value);
+      if(filterTo.value) query = query.lte('date', filterTo.value);
+      const { data, error } = await query;
+      if(error){
+        turnsTableBody.innerHTML = `<tr><td colspan="7" class="error">No se pudieron cargar los turnos. ${error.message}</td></tr>`;
+        return;
+      }
+      summaryTurns.textContent = data.length;
+      summaryPending.textContent = data.filter(t=>t.status === 'pendiente').length;
+      if(!data.length){
+        turnsTableBody.innerHTML = '<tr><td colspan="7" class="muted">No hay turnos con los filtros seleccionados.</td></tr>';
+        return;
+      }
+
+      const pros = await supabase.from('professionals').select('*').order('name');
+      const prosOpts = buildProfessionalOptions(pros.data || []);
+
+      turnsTableBody.innerHTML = '';
+      data.forEach(turn=>{
+        const row = rowTemplate.content.firstElementChild.cloneNode(true);
+        row.querySelector('[data-field="date"]').textContent = turn.date;
+        row.querySelector('[data-field="time"]').textContent = turn.time;
+        row.querySelector('[data-field="patient"]').textContent = turn.patient;
+        row.querySelector('[data-field="type"]').textContent = turn.type;
+        row.querySelector('[data-field="professional"]').innerHTML = `
+          <select data-action="assign-professional" data-id="${turn.id}">
+            ${prosOpts.replace(`value="${turn.professional}"`, `value="${turn.professional}" selected`)}
+          </select>`;
+        row.querySelector('[data-field="status"]').innerHTML = statusLabel(turn.status);
+        row.querySelector('[data-field="actions"]').innerHTML = `
+          <div class="table-actions">
+            <select data-action="set-status" data-id="${turn.id}">
+              <option value="pendiente"${turn.status==='pendiente'?' selected':''}>Pendiente</option>
+              <option value="confirmado"${turn.status==='confirmado'?' selected':''}>Confirmado</option>
+              <option value="cancelado"${turn.status==='cancelado'?' selected':''}>Cancelado</option>
+            </select>
+            <button data-action="view-json" data-id="${turn.id}" class="ghost">Ver</button>
+            <button data-action="delete-turn" data-id="${turn.id}" style="background:#dc2626;">Eliminar</button>
+          </div>
+        `;
+        turnsTableBody.appendChild(row);
+      });
+    }
+
+    async function updateTurn(id, payload){
+      const { error } = await supabase.from('turns').update(payload).eq('id', id);
+      if(error){
+        showAlert('error', `No se pudo actualizar el turno ${id}. ${error.message}`);
+        return false;
+      }
+      showAlert('success','Cambios guardados.');
+      return true;
+    }
+
+    async function deleteTurn(id){
+      const { error } = await supabase.from('turns').delete().eq('id', id);
+      if(error){
+        showAlert('error', `No se pudo eliminar el turno. ${error.message}`);
+        return false;
+      }
+      showAlert('success','Turno eliminado.');
+      return true;
+    }
+
+    document.getElementById('refresh-turns').addEventListener('click', loadTurns);
+    document.getElementById('refresh-pros').addEventListener('click', loadProfessionals);
+    document.getElementById('refresh-treatments').addEventListener('click', loadTreatments);
+
+    turnsTableBody.addEventListener('change', async (event)=>{
+      const target = event.target;
+      const action = target.dataset.action;
+      const id = target.dataset.id;
+      if(action === 'assign-professional'){
+        await updateTurn(id, { professional: target.value || null });
+        loadTurns();
+      }
+      if(action === 'set-status'){
+        await updateTurn(id, { status: target.value });
+        loadTurns();
+      }
+    });
+
+    turnsTableBody.addEventListener('click', async (event)=>{
+      const target = event.target;
+      const action = target.dataset.action;
+      const id = target.dataset.id;
+      if(action === 'view-json'){
+        const { data, error } = await supabase.from('turns').select('*').eq('id', id).maybeSingle();
+        if(error){
+          showAlert('error','No pudimos traer el detalle.');
+          return;
+        }
+        alert(JSON.stringify(data,null,2));
+      }
+      if(action === 'delete-turn'){
+        if(!confirm('¿Eliminar turno definitivamente?')) return;
+        if(await deleteTurn(id)){
+          loadTurns();
+        }
+      }
+    });
+
+    if(loginBtn){
+      loginBtn.addEventListener('click', async ()=>{
+        const email = prompt('Ingresá el correo del administrador:');
+        if(!email) return;
+        const { error } = await supabase.auth.signInWithOtp({ email });
+        if(error){
+          showAlert('error','No se pudo enviar el enlace mágico.');
+        }else{
+          showAlert('success','Enviamos un enlace mágico a tu correo.');
+        }
+      });
+    }
+
+    logoutBtn.addEventListener('click', async ()=>{
+      await supabase.auth.signOut();
+      window.location.reload();
+    });
+
+    (async function init(){
+      if(!await ensureAdmin()) return;
+      await Promise.all([loadTreatments(), loadProfessionals(), loadTurns()]);
+      supabase.channel('realtime:turns')
+        .on('postgres_changes',{event:'*', schema:'public', table:'turns'}, ()=>loadTurns())
+        .subscribe();
+    })();
+  </script>
+</body>
+</html>
+

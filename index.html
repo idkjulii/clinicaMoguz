@@ -1,0 +1,1119 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Clínica Moguz — Demo Frontend</title>
+  <meta name="description" content="Front-end demo para la Clínica Moguz: turnos, tratamientos, profesionales y chatbot (HTML/CSS/JS)." />
+  <style>
+    /* ---------- Reset & base ---------- */
+    :root{
+      /* Paleta Premium: Ciruela / Borgoña (Modo Claro) */
+      --bg:#f8f9fa; 
+      --card:#fff; 
+      --text:#1d2939; 
+      --muted:#6c757d; 
+      --accent:#9c305c; 
+      --accent-600:#7d284b; 
+      --glass: rgba(255,255,255,0.8);
+      
+      /* Variables de radio */
+      --radius-lg: 16px; 
+      --radius-md: 10px;
+    }
+
+    /* MODIFICACIÓN CLAVE: Modo Oscuro mejorado */
+    [data-theme="dark"]{ 
+      --bg:#0b1220; /* Fondo muy oscuro */
+      --card:#1e293b; /* Tarjetas ligeramente más claras para contraste */
+      --text:#e6eef8; 
+      --muted:#94a3b8; 
+      --accent:#d977a6; /* Acento más brillante para visibilidad */
+      --accent-600:#b95280;
+      --glass: rgba(255,255,255,0.08); /* Transparencia para blur oscuro */
+      --shadow-color: rgba(0,0,0,0.4); /* Color de sombra para Dark Mode */
+      --border-color: rgba(255,255,255,0.15); /* Color de borde sutil */
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial;
+      color:var(--text);
+      /* Fondo dinámico: utiliza un color simple y deja que --bg se encargue */
+      background:var(--bg);
+      transition: background-color 0.3s;
+    }
+    body[data-theme="light"] {
+        background:linear-gradient(180deg,var(--bg),#e6eef8); /* Degradado solo en modo claro */
+    }
+
+    /* Tipografía Estética */
+    h1, h2, h3 {
+      font-family: Georgia, serif; 
+      letter-spacing: -0.02em; 
+      color: var(--accent-600); 
+    }
+
+    .container{max-width:1100px;margin:0 auto;padding:20px}
+    
+    /* Header: Ajuste para Dark Mode */
+    header{
+      position:fixed;left:0;right:0;top:0;z-index:40;
+      background:var(--card);
+      backdrop-filter:blur(6px);
+      /* Borde dinámico */
+      border-bottom:1px solid rgba(0,0,0,0.05);
+      transition: background-color 0.3s, border-color 0.3s;
+    }
+    [data-theme="dark"] header {
+        border-bottom: 1px solid var(--border-color);
+    }
+    
+    .nav-inner{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 20px}
+    .brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit}
+    .brand .logo{
+      width:44px;height:44px;
+      border-radius:var(--radius-md); 
+      background:linear-gradient(135deg,var(--accent),var(--accent-600)); 
+      display:flex;align-items:center;justify-content:center;color:white;font-weight:700
+    }
+    nav a{margin:0 8px;text-decoration:none;color:var(--muted);font-weight:600;transition:color 0.2s}
+    nav a:hover{color:var(--accent)} 
+    .nav-actions{display:flex;align-items:center;gap:8px}
+    button{cursor:pointer}
+
+    main{padding-top:20px} 
+
+    /* ---------- Hero: Ajuste de sombras ---------- */
+    .hero{
+      margin-top: 150px; 
+      display:grid;grid-template-columns:1fr;gap:18px;align-items:center;padding:32px;
+      border-radius:var(--radius-lg); 
+      background:linear-gradient(180deg,rgba(255,255,255,0.6),rgba(255,255,255,0.3));
+      box-shadow:0 8px 24px rgba(16,24,40,0.08); /* Sombra modo claro */
+      transition: background 0.3s, box-shadow 0.3s;
+    }
+    [data-theme="dark"] .hero {
+      background: linear-gradient(180deg, var(--card), var(--card));
+      box-shadow: 0 8px 24px var(--shadow-color); /* Sombra oscura */
+    }
+    .hero .content{max-width:640px}
+    .hero h1{font-size:32px;margin:0 0 10px;color:var(--text)} 
+    .hero p{margin:0;color:var(--muted)}
+    .hero .cta{margin-top:20px;display:flex;gap:12px} 
+    
+    /* Estilo de Botones Premium */
+    .btn{
+      padding:12px 18px; 
+      border-radius:999px; 
+      border:0;
+      font-weight:700;
+      transition: all 0.2s ease-in-out; 
+    }
+    .btn-primary{background:var(--accent);color:white}
+    .btn-primary:hover{
+      background:var(--accent-600); 
+      transform: translateY(-1px); 
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+    }
+    .btn-ghost{background:transparent;border:1px solid var(--muted);color:var(--text)}
+    .btn-ghost:hover{
+      border-color:var(--accent);
+      color:var(--accent);
+    }
+    
+    /* Input/Select/Textarea: Ajuste de bordes en Dark Mode */
+    input,select,textarea{
+      width:100%;padding:12px;border-radius:var(--radius-md);
+      border:1px solid rgba(0,0,0,0.08);
+      background:transparent;
+      transition:border-color 0.2s, background-color 0.2s;
+    }
+    [data-theme="dark"] input,
+    [data-theme="dark"] select,
+    [data-theme="dark"] textarea {
+      background: var(--bg);
+      border-color: var(--border-color);
+      color: var(--text);
+    }
+    input:focus,select:focus,textarea:focus{border-color:var(--accent)}
+
+    /* Imagen del Hero más suave */
+    .hero .media{
+      height:220px;
+      border-radius:var(--radius-lg);
+      overflow:hidden;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+
+    /* ---------- Cards grid: Ajuste de sombras ---------- */
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px;margin-top:24px} 
+    .card{
+      background:var(--card);
+      border-radius:var(--radius-md);padding:18px;
+      box-shadow:0 6px 18px rgba(16,24,40,0.04);
+      transition:transform 0.2s, background-color 0.3s, box-shadow 0.3s;
+    }
+    [data-theme="dark"] .card {
+      box-shadow:0 6px 18px var(--shadow-color);
+    }
+    .card:hover{transform:translateY(-2px);box-shadow:0 10px 20px rgba(16,24,40,0.1);} 
+    [data-theme="dark"] .card:hover{box-shadow:0 10px 20px var(--shadow-color);}
+    .card h3{margin:0 0 8px}
+    .treatment-card img{width:100%;height:150px;object-fit:cover;border-radius:var(--radius-md)}
+
+    /* ---------- Turnos modal: Fondo y bordes ---------- */
+    .modal-backdrop{position:fixed;inset:0;background:rgba(2,6,23,0.45);display:flex;align-items:center;justify-content:center;z-index:60}
+    .modal{width:100%;max-width:760px;background:var(--card);padding:24px;border-radius:var(--radius-lg);box-shadow:0 12px 40px rgba(2,6,23,0.25)} 
+
+    /* ---------- Chatbot bubble ---------- */
+    .chat-bubble{position:fixed;right:18px;bottom:18px;width:64px;height:64px;border-radius:999px;background:linear-gradient(135deg,var(--accent),var(--accent-600));
+      display:flex;align-items:center;justify-content:center;color:white;box-shadow:0 8px 30px rgba(0,0,0,0.2);cursor:pointer;z-index:80}
+    .chat-window{position:fixed;right:18px;bottom:94px;width:340px;background:var(--card);border-radius:var(--radius-lg);padding:18px;box-shadow:0 12px 40px rgba(2,6,23,0.25);z-index:80}
+    .chat-window header{display:flex;align-items:center;justify-content:space-between}
+    .quick-buttons{display:flex;gap:6px;margin:8px 0}
+    .quick-buttons button{flex:1;padding:8px;border-radius:var(--radius-md);border:1px solid rgba(0,0,0,0.06)}
+    [data-theme="dark"] .quick-buttons button {
+        border-color: var(--border-color);
+    }
+    .chat-log{max-height:260px;overflow:auto;margin:10px 0;padding:8px;border-radius:var(--radius-md);background:var(--glass)}
+    .msg{margin:6px 0;padding:8px;border-radius:var(--radius-md);display:inline-block}
+    .msg.user{background:#e6f2ff;color:#072b44}
+    [data-theme="dark"] .msg.user {background:#3b82f6;color:white} /* Mensaje de usuario en color de acento azul */
+    .msg.bot{background:#f3f4f6;color:#1f2937}
+    [data-theme="dark"] .msg.bot {background:var(--bg);color:var(--text)} /* Mensaje de bot en color de fondo */
+
+    /* ---------- Turn table ---------- */
+    table{width:100%;border-collapse:collapse}
+    th,td{padding:10px;border-bottom:1px solid rgba(0,0,0,0.08);text-align:left}
+    [data-theme="dark"] th,
+    [data-theme="dark"] td {
+        border-bottom: 1px solid var(--border-color);
+    }
+    .pill{display:inline-block;padding:6px 10px;border-radius:999px;font-weight:700;font-size:12px} 
+    .pill.pending{background:#fff4cd;color:#92400e}
+    .pill.confirmed{background:#dcfce7;color:#166534}
+    .pill.cancel{background:#fee2e2;color:#991b1b}
+    
+    /* Pilas en modo oscuro */
+    [data-theme="dark"] .pill.pending{background:#78350f;color:#fcd34d}
+    [data-theme="dark"] .pill.confirmed{background:#065f46;color:#a7f3d0}
+    [data-theme="dark"] .pill.cancel{background:#7f1d1d;color:#fecaca}
+
+    /* ---------- Footer ---------- */
+    footer{
+      margin-top:40px;padding:30px 24px;
+      border-top:1px solid rgba(0,0,0,0.08);
+      color:var(--muted);
+    }
+    [data-theme="dark"] footer {
+        border-top: 1px solid var(--border-color);
+    }
+
+    /* Responsive tweaks */
+    @media(min-width:800px){
+      .hero{grid-template-columns:1fr 360px}
+      .hero .media{height:260px;border-radius:var(--radius-lg);overflow:hidden}
+    }
+  </style>
+  <script src="https://unpkg.com/@supabase/supabase-js"></script>
+  <script>
+    const SUPABASE_URL = 'https://rfcvgihqcyzvpofgddzh.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJmY3ZnaWhxY3l6dnBvZmdkZHpoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI3NTEzODUsImV4cCI6MjA3ODMyNzM4NX0.Cy508tNLMQLUtGupFcrHDTBa1MnfkvMF9Xp0z-3jJgo';
+    const supabase = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
+  </script>
+</head>
+<body data-theme="light">
+  <header>
+    <div class="nav-inner container">
+      <a href="#" class="brand" id="brand-link">
+        <div class="logo">CM</div>
+        <div>
+          <div style="font-weight:800">Clínica Moguz</div>
+          <div style="font-size:12px;color:var(--muted)">Cirugía plástica • Reconstructiva • Estética</div>
+        </div>
+      </a>
+
+      <nav aria-label="Navegación principal">
+        <a href="#home">Inicio</a>
+        <a href="#tratamientos">Tratamientos</a>
+        <a href="#profesionales">Profesionales</a>
+        <a href="#turnos">Turnos</a>
+        <a href="#contacto">Contacto</a>
+        <a href="admin.html" id="admin-link" style="display:none">Panel admin</a>
+      </nav>
+
+      <div class="nav-actions">
+        <select id="lang-select" aria-label="Seleccionar idioma">
+          <option value="es">ES</option>
+          <option value="en">EN</option>
+        </select>
+        <button id="toggle-theme" title="Modo oscuro">🌓</button>
+        <button id="open-turn" class="btn btn-primary">Solicitar turno</button>
+        <button id="login-btn" class="btn btn-ghost" onclick="openLoginModal()">Iniciar sesión</button>
+        <span id="user-status" style="margin-left:10px;color:var(--muted);"></span>
+      </div>
+    </div>
+  </header>
+
+  <main class="container" id="home">
+    <section class="hero" role="region" aria-labelledby="hero-title">
+      <div class="content">
+        <h1 id="hero-title">Clínica Moguz — Excelencia en cirugía plástica y estética</h1>
+        <p>Atención personalizada, equipo profesional y tecnología de vanguardia. Pedí tu turno presencial o virtual con unos pocos pasos.</p>
+        <div class="cta">
+          <button class="btn btn-primary" id="hero-request">Solicitar turno ahora</button>
+          <button class="btn btn-ghost" id="hero-treat">Conocé nuestros tratamientos</button>
+        </div>
+
+        <div style="margin-top:30px"> 
+          <h3>Próximos turnos</h3>
+          <div id="next-turns"></div>
+        </div>
+      </div>
+
+      <div class="media" aria-hidden="true">
+        <img src="https://static.vecteezy.com/ti/fotos-gratis/t2/45677420-laser-tratamento-cosmetico-salao-interior-foto.jpg" alt="Recepción clínica" style="width:100%;height:100%;object-fit:cover;border-radius:var(--radius-lg)"/>
+      </div>
+    </section>
+
+    <section id="turnos" style="margin-top:30px"> 
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <h2>Turnos</h2>
+        <div>
+          <button class="btn btn-ghost" id="my-turns-btn">Mis turnos</button> 
+          <button class="btn btn-ghost" id="history-btn">Historial</button> 
+        </div>
+      </div>
+
+      <div style="margin-top:16px" id="turns-table-area">
+        </div>
+    </section>
+
+    <section id="tratamientos" style="margin-top:40px"> 
+      <h2>Tratamientos y Servicios</h2>
+      <div style="margin:12px 0;display:flex;gap:12px"> 
+        <input id="t-search" placeholder="Buscar por nombre o especialidad" aria-label="Buscar tratamientos" style="flex:1" /> 
+        <button id="t-search-btn" class="btn btn-primary">Buscar</button> 
+      </div>
+
+      <div class="grid" id="treatments-grid" aria-live="polite"></div>
+    </section>
+
+    <section id="profesionales" style="margin-top:40px"> 
+      <h2>Profesionales</h2>
+      <div class="grid" id="professionals-grid"></div>
+    </section>
+
+    <section id="contacto" style="margin-top:40px"> 
+      <h2>Contacto</h2>
+      <div class="card" style="display:flex;gap:20px;align-items:center"> 
+        <div style="flex:1">
+          <p>Dirección: España 1115, Corrientes</p>
+          <p>Tel: (+54) 9 11 5754-2448 • Instagram: moguz6040</p>
+          <p>Horarios: Lun-mier 8:00 - 20:00</p>
+        </div>
+        <div style="width:320px"> 
+          <form id="contact-form">
+            <input name="name" placeholder="Nombre" required style="margin-bottom:8px" />
+            <input name="email" placeholder="Email" required style="margin-bottom:8px" />
+            <textarea name="msg" rows="3" placeholder="Consulta" required style="width:100%;padding:12px;border-radius:var(--radius-md)"></textarea> 
+            <div style="text-align:right;margin-top:10px">
+              <button class="btn btn-primary" type="submit">Enviar consulta</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <div style="display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap"> 
+        <div>
+          <strong>Clínica Moguz</strong>
+          <div style="color:var(--muted);font-size:13px;margin-top:6px">España 1115 • +54 91157542448 • Clinicamoguz@gmail.com</div>
+        </div>
+        <div style="color:var(--muted)"> Turnos • Tratamientos • Contacto</div>
+        <div style="color:var(--muted)">Políticas: Privacidad • T&C</div>
+      </div>
+    </footer>
+
+  </main>
+
+  <div id="modal-root" aria-live="polite"></div>
+
+  <div id="login-modal-root"></div>
+
+  <div id="chat-root"></div>
+
+  <script>
+    /* ---------- Estado local (simulado) ---------- */
+    const sampleTreatments = [
+      {id:1,name:'Rinoplastía',spec:'Cirugía facial',img:'https://images.unsplash.com/photo-1605902711622-cfb43c44367e?q=80&w=1100&auto=format&fit=crop&ixlib=rb-4.0.3&s=7e9e9c9bfae2'},
+      {id:2,name:'Liposucción',spec:'Contorno corporal',img:'https://images.unsplash.com/photo-1556228720-3b9ce3b1d8d2?q=80&w=1100&auto=format&fit=crop&ixlib=rb-4.0.3&s=c4f9a2b1d6a9'},
+      {id:3,name:'Aumento mamario',spec:'Cirugía mamaria',img:'https://images.unsplash.com/photo-1597764696389-2d98a6a2b7f9?q=80&w=1100&auto=format&fit=crop&ixlib=rb-4.0.3&s=8d8b5b4a9d6b'},
+      {id:4,name:'Toxina botulínica',spec:'Estética',img:'https://images.unsplash.com/photo-1600195077073-7f2d3b47f8d6?q=80&w=1100&auto=format&fit=crop&ixlib=rb-4.0.3&s=2b3e6a9f9aef'}
+    ];
+    let masterTreatments = [...sampleTreatments];
+    let currentTreatments = [...sampleTreatments];
+
+    const sampleProfessionals = [
+      {id:1,name:'Dra. Ana Moguz',spec:'Cirugía Plástica',bio:'Matrícula 12345. 15 años de experiencia.'},
+      {id:2,name:'Dr. Luis Pérez',spec:'Cirugía Reconstructiva',bio:'Especialista en reconstrucción post-trauma.'},
+      {id:3,name:'Dr. Mario Morales Guzman',spec:'Estética',bio:'tratamientos mínimamente invasivos.'}
+    ];
+    let masterProfessionals = [...sampleProfessionals];
+    let currentProfessionals = [...sampleProfessionals];
+
+    const FALLBACK_TREATMENT_IMG = 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?q=80&w=1200&auto=format&fit=crop&ixlib=rb-4.0.3';
+
+    let turnsCache = [];
+    let currentSession = null;
+    let currentProfile = null;
+
+    /* ---------- Render inicial ---------- */
+    const treatmentsGrid = document.getElementById('treatments-grid');
+    const profGrid = document.getElementById('professionals-grid');
+    const nextTurnsDiv = document.getElementById('next-turns');
+    const adminLink = document.getElementById('admin-link');
+
+    function renderTreatments(list = currentTreatments, { emptyMessage } = {}){
+      const data = Array.isArray(list) ? list : [];
+      if(data.length === 0){
+        treatmentsGrid.innerHTML = `<div class="card" style="color:var(--muted);padding:18px;text-align:center">${emptyMessage || 'No hay tratamientos disponibles por el momento.'}</div>`;
+        return;
+      }
+
+      currentTreatments = data;
+      treatmentsGrid.innerHTML = '';
+      data.forEach(t=>{
+        const id = typeof t.id !== 'undefined' ? t.id : (t.name || '');
+        const safeId = JSON.stringify(id);
+        const name = t.name || 'Tratamiento';
+        const specialty = t.spec || t.specialty || 'Especialidad a confirmar';
+        const image = t.img || t.image_url || t.image || FALLBACK_TREATMENT_IMG;
+
+        const el = document.createElement('div');
+        el.className='card treatment-card';
+        el.innerHTML = `<img src="${image}" alt="${name}" /><h3>${name}</h3><div style="color:var(--muted)">${specialty}</div><div style="margin-top:12px;display:flex;gap:8px"><button class='btn btn-ghost' onclick='viewTreatment(${safeId})'>Ver más</button><button class='btn btn-primary' onclick='requestTurnForTreat(${safeId})'>Solicitar turno</button></div>`;
+        treatmentsGrid.appendChild(el);
+      });
+    }
+
+    function renderProfessionals(list = masterProfessionals, { emptyMessage } = {}){
+      const data = Array.isArray(list) ? list : [];
+      if(data.length === 0){
+        profGrid.innerHTML = `<div class="card" style="color:var(--muted);padding:18px;text-align:center">${emptyMessage || 'No hay profesionales publicados por el momento.'}</div>`;
+        return;
+      }
+
+      currentProfessionals = data;
+      profGrid.innerHTML='';
+      data.forEach(p=>{
+        const name = p.name || 'Profesional';
+        const specialty = p.spec || p.specialty || 'Especialidad';
+        const bio = p.bio || p.description || 'Consultá para más información.';
+        const identifier = typeof p.id !== 'undefined' ? p.id : name;
+        const safeIdentifier = JSON.stringify(identifier);
+        const actionButton = (identifier !== null && identifier !== undefined && String(identifier).length)
+          ? `<button class='btn btn-primary' onclick='openTurnWithPro(${safeIdentifier})'>Sacar turno con este médico</button>`
+          : `<button class='btn btn-primary' disabled style="opacity:0.6;cursor:not-allowed">Contactar</button>`;
+
+        const el = document.createElement('div');
+        el.className='card';
+        el.innerHTML = `<h3>${name}</h3><div style="color:var(--muted)">${specialty}</div><p style="margin:8px 0">${bio}</p><div style="text-align:right">${actionButton}</div>`;
+        profGrid.appendChild(el);
+      })
+    }
+
+    function normalizeId(value){
+      return value !== null && value !== undefined ? String(value) : '';
+    }
+
+    function findTreatment(identifier){
+      const id = normalizeId(identifier);
+      const name = typeof identifier === 'string' ? identifier : null;
+      return currentTreatments.find(t=>normalizeId(t.id) === id) ||
+             masterTreatments.find(t=>normalizeId(t.id) === id) ||
+             sampleTreatments.find(t=>normalizeId(t.id) === id) ||
+             (name ? masterTreatments.find(t=>(t.name || '') === name) : undefined) ||
+             (name ? sampleTreatments.find(t=>(t.name || '') === name) : undefined);
+    }
+
+    function findProfessional(identifier){
+      const id = normalizeId(identifier);
+      const name = typeof identifier === 'string' ? identifier : null;
+      return currentProfessionals.find(p=>normalizeId(p.id) === id) ||
+             masterProfessionals.find(p=>normalizeId(p.id) === id) ||
+             sampleProfessionals.find(p=>normalizeId(p.id) === id) ||
+             (name ? masterProfessionals.find(p=>(p.name || '') === name) : undefined) ||
+             (name ? sampleProfessionals.find(p=>(p.name || '') === name) : undefined);
+    }
+
+    function updateRoleUI(){
+      if(adminLink){
+        adminLink.style.display = (currentProfile && currentProfile.role === 'admin') ? '' : 'none';
+      }
+    }
+
+    async function loadClientTurns({ force = false } = {}){
+      if(!supabase || !currentSession){
+        turnsCache = [];
+        return turnsCache;
+      }
+      if(!force && turnsCache.length){
+        return turnsCache;
+      }
+      try{
+        const { data, error } = await supabase
+          .from('turns')
+          .select('*')
+          .eq('user_id', currentSession.user.id)
+          .order('date', { ascending: true })
+          .order('time', { ascending: true });
+        if(error) throw error;
+        turnsCache = data || [];
+      }catch(err){
+        console.error('Error obteniendo turnos del cliente:', err);
+        turnsCache = [];
+      }
+      return turnsCache;
+    }
+
+    async function renderNextTurns({ force = false } = {}){
+      if(!supabase){
+        nextTurnsDiv.innerHTML = '<div style="color:var(--muted);padding:10px;border:1px dashed var(--muted);border-radius:var(--radius-md);margin-top:10px">Conectate a Supabase para ver tus próximos turnos.</div>';
+        return;
+      }
+      if(!currentSession){
+        nextTurnsDiv.innerHTML = '<div style="color:var(--muted);padding:10px;border:1px dashed var(--muted);border-radius:var(--radius-md);margin-top:10px">Iniciá sesión para ver tus próximos turnos.</div>';
+        return;
+      }
+      const list = (await loadClientTurns({ force })).filter(x=>x.status !== 'cancelado').slice(0,3);
+      if(list.length===0){
+        nextTurnsDiv.innerHTML = '<div style="color:var(--muted);padding:10px;border:1px dashed var(--muted);border-radius:var(--radius-md);margin-top:10px">No hay turnos próximos</div>';
+        return;
+      }
+      nextTurnsDiv.innerHTML = list.map(x=>`<div class="card" style="margin-bottom:10px"><strong>${x.specialty} — ${x.professional||'Sin asignar'}</strong><div style="color:var(--muted)">${x.date} ${x.time} • ${x.type}</div></div>`).join('');
+    }
+
+    renderTreatments(masterTreatments);
+    renderProfessionals(masterProfessionals);
+    renderNextTurns();
+
+    /* ---------- Buscador ---------- */
+    const treatmentSearchInput = document.getElementById('t-search');
+    const treatmentSearchBtn = document.getElementById('t-search-btn');
+
+    function handleTreatmentSearch(){
+      const query = (treatmentSearchInput.value || '').trim().toLowerCase();
+      const source = (masterTreatments && masterTreatments.length) ? masterTreatments : sampleTreatments;
+      if(!query){
+        renderTreatments(source);
+        return;
+      }
+
+      const matches = source.filter(t=>{
+        const name = (t.name || '').toLowerCase();
+        const specialty = (t.spec || t.specialty || '').toLowerCase();
+        return name.includes(query) || specialty.includes(query);
+      });
+
+      renderTreatments(matches, { emptyMessage: 'No se encontraron tratamientos que coincidan con la búsqueda.' });
+    }
+
+    treatmentSearchBtn.addEventListener('click', handleTreatmentSearch);
+    treatmentSearchInput.addEventListener('keydown', (event)=>{
+      if(event.key === 'Enter'){
+        event.preventDefault();
+        handleTreatmentSearch();
+      }
+    });
+
+    /* ---------- Turnos modal logic ---------- */
+    const modalRoot = document.getElementById('modal-root');
+
+    function openTurnModal(opts={}){
+      if (!supabase) {
+        alert('Necesitás la base de datos activa para gestionar turnos.');
+        return;
+      }
+      if (!currentSession) {
+        alert('Iniciá sesión para solicitar turnos.');
+        if (typeof openLoginModal === 'function') openLoginModal();
+        return;
+      }
+      // opts puede incluir specialty, professional, type, date, time, patient, onSubmit
+      modalRoot.innerHTML = `
+        <div class="modal-backdrop" role="dialog" aria-modal="true">
+          <div class="modal">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <h3>Solicitar turno</h3>
+              <button aria-label="Cerrar" id="close-modal" class="btn btn-ghost" style="border-radius:50%;padding:6px 10px">✕</button>
+            </div>
+            <form id="turn-form" style="margin-top:20px">
+              <div class="form-row">
+                <select name="type" required>
+                  <option value="Presencial">Presencial</option>
+                  <option value="Virtual">Virtual</option>
+                </select>
+                <select name="specialty" required>
+                  <option value="Cirugía Plástica">Cirugía Plástica</option>
+                  <option value="Cirugía Reconstructiva">Cirugía Reconstructiva</option>
+                  <option value="Estética">Estética</option>
+                </select>
+              </div>
+
+              <div class="form-row">
+                <select name="professional" id="professional-select">
+                  <option value="">-- Profesional (opcional) --</option>
+                </select>
+                <input type="date" name="date" required />
+              </div>
+
+              <div class="form-row">
+                <input type="time" name="time" required />
+                <input type="text" name="patient" placeholder="Nombre del paciente" required />
+              </div>
+
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-top:15px">
+                <small style="color:var(--muted)">Podés reprogramar o cancelar desde "Mis turnos"</small>
+                <div>
+                  <button type="button" id="cancel-modal" class="btn btn-ghost">Cancelar</button>
+                  <button type="submit" class="btn btn-primary" style="margin-left:10px">Confirmar turno</button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      `;
+
+      // fill professional select
+      const proSel = document.getElementById('professional-select');
+      const professionalsSource = (masterProfessionals && masterProfessionals.length) ? masterProfessionals : sampleProfessionals;
+      proSel.innerHTML = '<option value="">-- Profesional (opcional) --</option>' + professionalsSource.map(p=>{
+        const name = p.name || 'Profesional';
+        const specialty = p.spec || p.specialty || 'Especialidad';
+        return `<option value="${name}">${name} — ${specialty}</option>`;
+      }).join('');
+
+      const form = document.getElementById('turn-form');
+      const specialtySelect = form.querySelector('select[name="specialty"]');
+
+      if(opts.specialty){
+        const exists = Array.from(specialtySelect.options).some(option=>option.value === opts.specialty);
+        if(!exists){
+          const customOption = document.createElement('option');
+          customOption.value = opts.specialty;
+          customOption.textContent = opts.specialty;
+          specialtySelect.appendChild(customOption);
+        }
+        specialtySelect.value = opts.specialty;
+      }
+      if(opts.type){ form.type.value = opts.type; }
+      if(opts.professional){ proSel.value = opts.professional; }
+      if(opts.date){ form.date.value = opts.date; }
+      if(opts.time){ form.time.value = opts.time; }
+      if(opts.patient){ form.patient.value = opts.patient; }
+
+      const submitHandler = typeof opts.onSubmit === 'function'
+        ? (event)=>opts.onSubmit(event, closeModal)
+        : onConfirmTurn;
+
+      document.getElementById('close-modal').addEventListener('click', closeModal);
+      document.getElementById('cancel-modal').addEventListener('click', closeModal);
+      form.addEventListener('submit', submitHandler);
+    }
+
+    function closeModal(){ modalRoot.innerHTML = '' }
+
+    async function onConfirmTurn(e) {
+        e.preventDefault();
+        if (!supabase) {
+            alert('No es posible solicitar turnos sin conexión a la base de datos.');
+            return;
+        }
+        if (!currentSession) {
+            alert('Iniciá sesión para solicitar un turno.');
+            if (typeof openLoginModal === 'function') openLoginModal();
+            return;
+        }
+        const f = e.target;
+
+        const turnRecord = {
+            type: f.type.value,
+            specialty: f.specialty.value,
+            professional: f.professional.value || null,
+            date: f.date.value,
+            time: f.time.value,
+            patient: f.patient.value,
+            status: 'pendiente',
+            user_id: currentSession.user.id
+        };
+
+        const { error } = await saveTurnDB(turnRecord);
+        if (error) {
+            console.error('❌ Error guardando en Supabase:', error);
+            alert('Error al guardar el turno en la base de datos. Detalles: ' + (error.message || error));
+            return;
+        }
+
+        closeModal();
+        await renderTurnsTable({ force: true });
+        await renderNextTurns({ force: true });
+        alert('Turno solicitado con éxito');
+    }
+
+
+    document.getElementById('open-turn').addEventListener('click', ()=>openTurnModal());
+    document.getElementById('hero-request').addEventListener('click', ()=>openTurnModal());
+    const heroTreatBtn = document.getElementById('hero-treat');
+    if(heroTreatBtn){
+      heroTreatBtn.addEventListener('click', ()=>{
+        const target = document.getElementById('tratamientos');
+        if(target){
+          target.scrollIntoView({behavior:'smooth'});
+        }
+      });
+    }
+
+    function requestTurnForTreat(identifier){
+      const treatment = findTreatment(identifier);
+      if(!treatment){
+        console.warn('Tratamiento no encontrado para la solicitud de turno.', identifier);
+        openTurnModal();
+        return;
+      }
+      const specialty = treatment.spec || treatment.specialty;
+      openTurnModal({specialty});
+    }
+
+    function openTurnWithPro(identifier){
+      const professional = findProfessional(identifier);
+      if(!professional){
+        console.warn('Profesional no encontrado.', identifier);
+        openTurnModal();
+        return;
+      }
+      const specialty = professional.spec || professional.specialty;
+      openTurnModal({professional: professional.name, specialty});
+    }
+
+    function viewTreatment(identifier){
+      const treatment = findTreatment(identifier);
+      if(!treatment){
+        alert('No se encontró información del tratamiento seleccionado.');
+        return;
+      }
+      const name = treatment.name || 'Tratamiento';
+      const specialty = treatment.spec || treatment.specialty || 'Especialidad a confirmar';
+      const duration = treatment.duration || 'Duración estimada a evaluar con el profesional.';
+      const info = treatment.description || 'Solicitá una evaluación para conocer más detalles.';
+      alert(`${name}\n\nEspecialidad: ${specialty}\n${duration}\n\n${info}`);
+    }
+
+    /* ---------- Mis turnos / Tabla ---------- */
+    async function renderTurnsTable({ force = false } = {}){
+      const area = document.getElementById('turns-table-area');
+      if(!supabase){
+        area.innerHTML = '<div style="color:var(--muted);padding:10px;border:1px dashed var(--muted);border-radius:var(--radius-md)">Conectá Supabase para gestionar turnos.</div>';
+        return;
+      }
+      if(!currentSession){
+        area.innerHTML = '<div style="color:var(--muted);padding:10px;border:1px dashed var(--muted);border-radius:var(--radius-md)">Iniciá sesión para ver y administrar tus turnos.</div>';
+        return;
+      }
+      const arr = await loadClientTurns({ force });
+      if(arr.length===0){
+        area.innerHTML = '<div style="color:var(--muted);padding:10px;border:1px dashed var(--muted);border-radius:var(--radius-md)">No registrás turnos aún.</div>';
+        return;
+      }
+      let html = '<table><thead><tr><th>Fecha</th><th>Hora</th><th>Médico</th><th>Tipo</th><th>Estado</th><th>Acciones</th></tr></thead><tbody>';
+      arr.forEach(t=>{
+        const turnId = JSON.stringify(t.id);
+        html += `<tr><td>${t.date}</td><td>${t.time}</td><td>${t.professional||'-'}</td><td>${t.type}</td><td>${statusPill(t.status)}</td><td><button class='btn btn-ghost' style='padding:6px' onclick="reprogram(${turnId})">Reprogramar</button> <button class='btn btn-ghost' style='padding:6px' onclick="cancelTurn(${turnId})">Cancelar</button> <button class='btn btn-ghost' style='padding:6px' onclick="viewDetails(${turnId})">Ver</button></td></tr>`;
+      });
+      html += '</tbody></table>';
+      area.innerHTML = html;
+    }
+
+    function statusPill(s){
+      if(s==='pendiente') return '<span class="pill pending">Pendiente</span>';
+      if(s==='confirmado') return '<span class="pill confirmed">Confirmado</span>';
+      return '<span class="pill cancel">Cancelado</span>';
+    }
+
+    async function reprogram(identifier){
+      if(!supabase || !currentSession){
+        alert('Iniciá sesión y asegurate de tener conexión con la base de datos.');
+        return;
+      }
+      await loadClientTurns();
+      const turn = turnsCache.find(x=>normalizeId(x.id) === normalizeId(identifier));
+      if(!turn){
+        alert('No encontramos ese turno.');
+        return;
+      }
+
+      openTurnModal({
+        type: turn.type,
+        specialty: turn.specialty,
+        professional: turn.professional || '',
+        date: turn.date,
+        time: turn.time,
+        patient: turn.patient,
+        onSubmit: async (event)=>{
+          event.preventDefault();
+          const form = event.target;
+          const updatePayload = {
+            type: form.type.value,
+            specialty: form.specialty.value,
+            professional: form.professional.value || null,
+            date: form.date.value,
+            time: form.time.value,
+            patient: form.patient.value
+          };
+          const { error } = await supabase
+            .from('turns')
+            .update(updatePayload)
+            .eq('id', turn.id)
+            .eq('user_id', currentSession.user.id);
+          if(error){
+            console.error('Error reprogramando:', error);
+            alert('No pudimos reprogramar el turno. Detalle: ' + (error.message || error));
+            return;
+          }
+          closeModal();
+          await renderTurnsTable({ force: true });
+          await renderNextTurns({ force: true });
+          alert('Turno reprogramado');
+        }
+      });
+    }
+
+    async function cancelTurn(identifier){
+      if(!confirm('Confirmar cancelación?')) return;
+      if(!supabase || !currentSession){
+        alert('Iniciá sesión y asegurate de tener conexión con la base de datos.');
+        return;
+      }
+      const { error } = await supabase
+        .from('turns')
+        .update({ status: 'cancelado' })
+        .eq('id', normalizeId(identifier))
+        .eq('user_id', currentSession.user.id);
+      if(error){
+        console.error('Error cancelando turno:', error);
+        alert('No pudimos cancelar el turno. Detalle: ' + (error.message || error));
+        return;
+      }
+      await renderTurnsTable({ force: true });
+      await renderNextTurns({ force: true });
+    }
+
+    async function viewDetails(identifier){
+      await loadClientTurns();
+      const turn = turnsCache.find(x=>normalizeId(x.id) === normalizeId(identifier));
+      if(!turn){
+        alert('No se encontró el detalle del turno.');
+        return;
+      }
+      alert(JSON.stringify(turn,null,2));
+    }
+
+    document.getElementById('my-turns-btn').addEventListener('click', async ()=>{
+      await renderTurnsTable({ force: true });
+      window.scrollTo({top:document.getElementById('turnos').offsetTop-80,behavior:'smooth'});
+    });
+    document.getElementById('history-btn').addEventListener('click', async ()=>{
+      if(!currentSession){
+        alert('Iniciá sesión para consultar tu historial.');
+        return;
+      }
+      const arr = await loadClientTurns({ force: true });
+      const hist = arr.map(x=>`${x.date} ${x.time} — ${x.specialty} — ${x.status}`).join('\n');
+      alert('Historial:\n\n'+(hist||'No hay historial'));
+    });
+
+    /* ---------- Chatbot (simple) ---------- */
+    const chatRoot = document.getElementById('chat-root');
+    function renderChat(open=false){
+      chatRoot.innerHTML = open ? `
+        <div class="chat-window" role="dialog" aria-label="Asistente de Clínica Moguz">
+          <header><strong>Asistente Clínica Moguz</strong><button id="close-chat" class='btn btn-ghost' style='padding:6px 10px;border-radius:50%'>✕</button></header>
+          <div class="chat-log" id="chat-log"><div class="msg bot">Hola 👋 Soy el asistente virtual de Clínica Moguz. ¿En qué puedo ayudarte?</div></div>
+          <div class="quick-buttons"><button class='btn btn-ghost' onclick="chatQuick('Consultar turnos')">Consultar turnos</button><button class='btn btn-ghost' onclick="chatQuick('Ver tratamientos')">Ver tratamientos</button><button class='btn btn-ghost' onclick="chatQuick('Horarios y contacto')">Horarios y contacto</button></div>
+          <form id="chat-form"><input name="q" placeholder="Escribí tu consulta" style="width:100%;padding:10px;border-radius:var(--radius-md);border:1px solid rgba(0,0,0,0.06)" /></form>
+        </div>
+      ` : `<div class="chat-bubble" id="open-chat" aria-label="Abrir chat">💬</div>`;
+      if(open) document.getElementById('close-chat').addEventListener('click', ()=>renderChat(false)); else document.getElementById('open-chat').addEventListener('click', ()=>renderChat(true));
+      const cf = document.getElementById('chat-form'); if(cf){ cf.addEventListener('submit', (e)=>{ e.preventDefault(); const q = cf.q.value.trim(); if(!q) return; pushUserMsg(q); cf.q.value=''; setTimeout(()=>botReply(q),600) }) }
+    }
+    function pushUserMsg(t){ const log = document.getElementById('chat-log'); if(!log) return; const el = document.createElement('div'); el.className='msg user'; el.textContent = t; log.appendChild(el); log.scrollTop = log.scrollHeight; }
+    function pushBotMsg(t){ const log = document.getElementById('chat-log'); if(!log) return; const el = document.createElement('div'); el.className='msg bot'; el.textContent = t; log.appendChild(el); log.scrollTop = log.scrollHeight; }
+    async function botReply(q){ // reglas simples
+      const lower = q.toLowerCase();
+      if(/turnos|turno|cita/.test(lower)){
+        if(!currentSession){
+          pushBotMsg('Iniciá sesión para solicitar y revisar tus turnos.');
+          return;
+        }
+        const arr = await loadClientTurns();
+        pushBotMsg(arr.length?`Tenés ${arr.length} turno(s) registrado(s). Pulsá "Mis turnos" para gestionarlos.`:'Todavía no registrás turnos. Podés solicitar uno con "Solicitar turno".');
+        return;
+      }
+      if(/tratamiento|estética|rinoplast|lipo/.test(lower)){ pushBotMsg('Podés ver la lista de tratamientos en la sección "Tratamientos". ¿Querés que te muestre los destacados?'); return }
+      if(/horario|contacto|tel|telefono/.test(lower)){ pushBotMsg('Horarios: Lun-Vie 9:00-18:00. Tel: (+54) 9 11 1234 5678. Email: contacto@clinicamoguz.com'); return }
+      pushBotMsg('Lo siento, no entendí. ¿Querés que derive tu consulta a un asistente?')
+    }
+    function chatQuick(q){ pushUserMsg(q); setTimeout(()=>botReply(q),200) }
+    renderChat(false);
+    window.chatQuick = chatQuick;
+    window.requestTurnForTreat = requestTurnForTreat;
+    window.openTurnWithPro = openTurnWithPro;
+    window.viewTreatment = viewTreatment;
+
+    /* ---------- Theme / Language / Contact ---------- */
+    document.getElementById('toggle-theme').addEventListener('click', ()=>{
+      document.body.dataset.theme = document.body.dataset.theme === 'dark' ? 'light' : 'dark';
+    })
+    document.getElementById('lang-select').addEventListener('change', (e)=>{ if(e.target.value==='en') alert('Demo: en-ES not fully translated.'); })
+
+    document.getElementById('contact-form').addEventListener('submit',(e)=>{ e.preventDefault(); alert('Consulta enviada. Nos contactaremos por correo.'); e.target.reset(); })
+
+    // Accessibility: brand click scroll to top
+    document.getElementById('brand-link').addEventListener('click',(e)=>{ e.preventDefault(); window.scrollTo({top:0,behavior:'smooth'}) })
+
+    // render turns table if any exist on load
+    renderTurnsTable();
+
+    /* ---------- Login modal (Supabase Ready) ---------- */
+    const loginModalRoot = document.getElementById('login-modal-root');
+    const loginBtn = document.getElementById('login-btn');
+    const userStatus = document.getElementById('user-status');
+
+
+    // >>>>>>> FUNCIÓN openLoginModal RESTAURADA Y CORREGIDA <<<<<<<
+    function openLoginModal() {
+        loginModalRoot.innerHTML = `
+            <div class="modal-backdrop" role="dialog" aria-modal="true">
+                <div class="modal" style="max-width:400px;padding:24px">
+                    <div style="display:flex;justify-content:space-between;align-items:center">
+                        <h3>Iniciar sesión</h3>
+                        <button aria-label="Cerrar" id="close-login-modal" class='btn btn-ghost' style="border-radius:50%;padding:6px 10px">✕</button>
+                    </div>
+                    <form id="login-form" style="margin-top:20px">
+                        <div class="form-row">
+                            <input type="email" name="email" placeholder="Correo electrónico" required />
+                        </div>
+                        <div style="color:var(--muted);font-size:12px;margin-bottom:15px">
+                            Te enviaremos un enlace mágico a este correo para iniciar sesión al instante.
+                        </div>
+                        <div style="display:flex;justify-content:flex-end;align-items:center;margin-top:15px">
+                            <button type="button" id="cancel-login-modal" class="btn btn-ghost">Cancelar</button>
+                            <button type="submit" class="btn btn-primary" style="margin-left:10px">Enviar enlace</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        `;
+        document.getElementById('close-login-modal').onclick = closeLoginModal;
+        document.getElementById('cancel-login-modal').onclick = closeLoginModal;
+        
+        document.getElementById('login-form').onsubmit = async function(e) {
+            e.preventDefault();
+            const email = e.target.email.value.trim();
+            if (!email) return alert('Ingrese un correo electrónico');
+
+            if (!supabase) {
+                alert('La autenticación no está disponible en este entorno. Contactanos para gestionar tu acceso.');
+                return;
+            }
+
+            const { error } = await supabase.auth.signInWithOtp({ email });
+
+            if (error) {
+                console.error('Error enviando Magic Link:', error);
+                alert('Error al enviar el enlace. Verifique su correo o la configuración de Supabase.');
+            } else {
+                alert(`✅ Enlace mágico enviado a ${email}. Revise su bandeja de entrada (y Spam).`);
+                closeLoginModal();
+            }
+        };
+    }
+    
+    function closeLoginModal() {
+        loginModalRoot.innerHTML = '';
+    }
+    
+    // --- LÓGICA DE ESTADO DE SESIÓN DE SUPABASE ---
+
+    async function ensureProfile(session){
+        if (!supabase || !session?.user) return null;
+        try{
+            const { data, error } = await supabase
+              .from('profiles')
+              .select('id, full_name, role')
+              .eq('id', session.user.id)
+              .maybeSingle();
+            if (error) throw error;
+            if (data) return data;
+
+            const defaultName = session.user.user_metadata?.full_name || (session.user.email ? session.user.email.split('@')[0] : 'Usuario');
+            const { data: inserted, error: insertError } = await supabase
+              .from('profiles')
+              .insert({ id: session.user.id, full_name: defaultName, role: 'client' })
+              .select('id, full_name, role')
+              .maybeSingle();
+            if (insertError) throw insertError;
+            return inserted || { id: session.user.id, full_name: defaultName, role: 'client' };
+        }catch(err){
+            console.error('Error asegurando perfil:', err);
+            return null;
+        }
+    }
+
+    async function renderAuthStatus() {
+        if (!supabase) {
+            currentSession = null;
+            currentProfile = null;
+            userStatus.textContent = '';
+            loginBtn.style.display = '';
+            updateRoleUI();
+            return;
+        }
+
+        try {
+            const { data, error } = await supabase.auth.getSession();
+            if (error) throw error;
+            const session = data?.session;
+            currentSession = session || null;
+
+            if (session) {
+                currentProfile = await ensureProfile(session);
+                const displayName =
+                  currentProfile?.full_name ||
+                  session.user?.user_metadata?.full_name ||
+                  (session.user?.email ? session.user.email.split('@')[0] : 'Usuario');
+                
+                userStatus.innerHTML = `Bienvenido, <strong>${displayName}</strong> <button id='logout-btn' style='margin-left:8px' class='btn btn-ghost'>Cerrar sesión</button>`;
+                loginBtn.style.display = 'none';
+
+                document.getElementById('logout-btn').onclick = async () => {
+                    await supabase.auth.signOut();
+                };
+            } else {
+                currentProfile = null;
+                userStatus.textContent = '';
+                loginBtn.style.display = '';
+            }
+        } catch (err) {
+            console.error('Error obteniendo sesión de Supabase:', err);
+            currentSession = null;
+            currentProfile = null;
+            userStatus.textContent = '';
+            loginBtn.style.display = '';
+        } finally {
+            updateRoleUI();
+            closeLoginModal();
+            await renderTurnsTable({ force: true });
+            await renderNextTurns({ force: true });
+        }
+    }
+
+    if (supabase) {
+        // 2. Escucha CUALQUIER cambio de estado (incluyendo el retorno del Magic Link)
+        supabase.auth.onAuthStateChange((event) => {
+            if (event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'INITIAL_SESSION') {
+                renderAuthStatus();
+            }
+        });
+
+        // 3. Llama a la función al inicio para procesar tokens en la URL
+        renderAuthStatus();
+    } else {
+        console.warn('Supabase no está disponible para autenticación. Se utilizará modo local.');
+    }
+
+    // ---------- Funciones de datos (Supabase) ----------
+    async function fetchTreatments() {
+        if (!supabase) return [];
+        try {
+            const { data, error } = await supabase.from('treatments').select('*');
+            if (error) throw error;
+            return data || [];
+        } catch (err) {
+            console.error('Error cargando tratamientos:', err);
+            return [];
+        }
+    }
+
+    async function fetchProfessionals() {
+        if (!supabase) return [];
+        try {
+            const { data, error } = await supabase.from('professionals').select('*');
+            if (error) throw error;
+            return data || [];
+        } catch (err) {
+            console.error('Error cargando profesionales:', err);
+            return [];
+        }
+    }
+
+    async function saveTurnDB(turn) {
+        if (!supabase) {
+            console.warn('Supabase no está disponible. El turno quedó guardado solo de forma local.');
+            return { error: null, skipped: true };
+        }
+        try {
+            const { data, error } = await supabase.from('turns').insert([turn]).select('*').maybeSingle();
+            if (error) throw error;
+            return { error: null, data };
+        } catch (err) {
+            return { error: err };
+        }
+    }
+
+    async function fetchTurns(filters = {}) {
+        if (!supabase) return [];
+        try {
+            let query = supabase.from('turns').select('*');
+            if (filters.user_id) query = query.eq('user_id', filters.user_id);
+            if (filters.status) query = query.eq('status', filters.status);
+            if (filters.from) query = query.gte('date', filters.from);
+            if (filters.to) query = query.lte('date', filters.to);
+            const { data, error } = await query;
+            if (error) throw error;
+            return data || [];
+        } catch (err) {
+            console.error('Error cargando turnos:', err);
+            return [];
+        }
+    }
+
+    async function initSupabaseData() {
+        if (!supabase) return;
+        try {
+            const [treatments, pros] = await Promise.all([fetchTreatments(), fetchProfessionals()]);
+            if (Array.isArray(treatments) && treatments.length) {
+                masterTreatments = treatments;
+                renderTreatments(masterTreatments);
+            }
+            if (Array.isArray(pros) && pros.length) {
+                masterProfessionals = pros;
+                renderProfessionals(masterProfessionals);
+            }
+        } catch (err) {
+            console.error('Error inicializando datos desde Supabase:', err);
+        }
+    }
+
+    initSupabaseData();
+
+    // REMOVIDO: loginBtn.addEventListener('click', openLoginModal);
+    // Ahora el botón tiene onclick="openLoginModal()" en el HTML.
+
+  </script>
+</body>
+</html>
