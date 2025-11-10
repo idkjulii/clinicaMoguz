@@ -1,81 +1,53 @@
-const STORAGE_KEYS = {
-  theme: "cm-theme",
-};
+const subscribers = new Set();
 
-function getPreferredTheme() {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEYS.theme);
-    if (stored === "light" || stored === "dark") {
-      return stored;
-    }
-  } catch (error) {
-    console.warn("No se pudo leer la preferencia de tema almacenada.", error);
-  }
-  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-}
-
-let state = {
-  theme: getPreferredTheme(),
-  session: null,
-  profile: null,
+const initialState = {
   treatments: [],
   professionals: [],
+  filteredTreatments: [],
+  filteredProfessionals: [],
   turns: [],
-  upcomingTurns: [],
-  navOpen: false,
-  chatOpen: false,
-  status: {
-    treatments: "idle",
-    professionals: "idle",
-    turns: "idle",
-    auth: "idle",
-  },
+  session: null,
+  profile: null,
+  isChatOpen: false,
 };
 
-const listeners = new Set();
+const state = structuredClone(initialState);
+
+function notify() {
+  subscribers.forEach((listener) => {
+    try {
+      listener(state);
+    } catch (error) {
+      console.error('Error notificando al suscriptor del store:', error);
+    }
+  });
+}
 
 export function getState() {
   return state;
 }
 
-export function setState(patch) {
-  const previous = state;
-  state = { ...state, ...patch };
-  emit(state, previous);
+export function setState(updater) {
+  const update =
+    typeof updater === 'function'
+      ? updater({ ...state })
+      : typeof updater === 'object'
+        ? updater
+        : null;
+
+  if (!update) return;
+
+  Object.assign(state, update);
+  notify();
 }
 
-export function updateState(updater) {
-  const previous = state;
-  state = updater({ ...state });
-  emit(state, previous);
+export function resetState() {
+  Object.assign(state, structuredClone(initialState));
+  notify();
 }
 
-export function subscribe(listener, options = {}) {
-  const { immediate = true } = options;
-  listeners.add(listener);
-  if (immediate) {
-    listener(state, state);
-  }
-  return () => {
-    listeners.delete(listener);
-  };
-}
-
-export function persistTheme(theme) {
-  try {
-    localStorage.setItem(STORAGE_KEYS.theme, theme);
-  } catch (error) {
-    console.warn("No se pudo persistir el tema seleccionado.", error);
-  }
-}
-
-function emit(next, previous) {
-  listeners.forEach((listener) => {
-    try {
-      listener(next, previous);
-    } catch (error) {
-      console.error("Error notificando al listener de estado:", error);
-    }
-  });
+export function subscribe(listener) {
+  subscribers.add(listener);
+  return () => subscribers.delete(listener);
 }
 

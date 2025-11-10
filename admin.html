@@ -2,137 +2,107 @@
 <html lang="es">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Panel administrativo — Clínica Moguz</title>
-  <meta name="description" content="Panel administrativo moderno de Clínica Moguz. Gestioná turnos, profesionales y tratamientos conectados a Supabase." />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="./assets/css/main.css" />
-  <link rel="stylesheet" href="./assets/css/admin.css" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Panel admin — Clínica Moguz</title>
+  <link rel="stylesheet" href="assets/css/admin.css" />
 </head>
-<body data-theme="light">
-  <div id="toast-root" class="toast-stack"></div>
-  <main class="admin-layout">
-    <header class="admin-header">
-      <div class="admin-header__title">
-        <span class="badge">Panel administrativo</span>
-        <h1>Control central Clínica Moguz</h1>
-        <p>Gestioná turnos en vivo, profesionales y tratamientos con datos sincronizados desde Supabase.</p>
-      </div>
-      <div class="admin-header__actions">
-        <button class="btn btn--icon" id="theme-toggle" data-action="toggle-theme" aria-label="Cambiar tema">🌓</button>
-        <button class="btn btn--ghost" data-action="logout" id="logout-btn">Cerrar sesión</button>
-        <a class="btn btn--tonal" href="index.html">← Volver al sitio</a>
-      </div>
-    </header>
+<body>
+  <header>
+    <div>
+      <h1 style="margin:0;">Panel administrativo</h1>
+      <div class="muted">Gestión de turnos, profesionales y tratamientos</div>
+    </div>
+    <div>
+      <button id="logout-btn" class="ghost">Cerrar sesión</button>
+      <a href="index.html" style="margin-left:12px;text-decoration:none;">← Volver al sitio público</a>
+    </div>
+  </header>
 
-    <section id="auth-guard" class="card admin-alert" hidden>
-      <h2 style="margin-top:0;">Acceso restringido</h2>
-      <p id="guard-message" class="text-muted">Necesitás iniciar sesión como administrador para continuar.</p>
-      <div style="display:flex;gap:12px;margin-top:16px;flex-wrap:wrap;">
-        <button class="btn btn--solid" id="send-link-btn" data-action="send-magic-link">Enviar enlace mágico</button>
-        <button class="btn btn--ghost" data-action="retry-session">Reintentar</button>
-      </div>
-    </section>
+  <div id="alerts"></div>
 
-    <section id="content" class="admin-content" hidden>
-      <div class="grid summary-grid">
-        <article class="summary-card">
-          <span class="text-muted">Total turnos</span>
-          <strong id="summary-turns">0</strong>
-          <span class="text-muted">Incluye todos los estados</span>
-        </article>
-        <article class="summary-card">
-          <span class="text-muted">Pendientes</span>
-          <strong id="summary-pending">0</strong>
-          <span class="text-muted">A confirmar por el equipo</span>
-        </article>
-        <article class="summary-card">
-          <span class="text-muted">Profesionales activos</span>
-          <strong id="summary-pros">0</strong>
-          <span class="text-muted">Perfiles publicados</span>
-        </article>
-      </div>
+  <section id="auth-guard" class="warning hidden">
+    Necesitás iniciar sesión como administrador para acceder a este panel.
+    <div style="margin-top:12px;">
+      <button id="login-btn">Enviar enlace mágico</button>
+    </div>
+  </section>
 
-      <section class="card">
-        <div class="section__heading">
-          <span class="badge">Turnos</span>
-          <h2>Gestión de turnos</h2>
-          <p class="text-muted">Filtrá por estado, rango de fechas o profesional y actualizá los turnos en tiempo real.</p>
+  <section id="content" class="hidden">
+    <div class="card">
+      <h2>Resumen rápido</h2>
+      <div class="grid" id="summary-grid">
+        <div class="card" style="box-shadow:none;border:1px solid #e2e8f0;">
+          <strong>Total turnos</strong>
+          <div id="summary-turns" style="font-size:28px;margin-top:6px;">0</div>
+          <div class="muted">Incluye todos los estados</div>
         </div>
-        <div class="filters">
-          <label>
-            Estado
-            <select id="filter-status">
-              <option value="">Todos</option>
-              <option value="pendiente">Pendiente</option>
-              <option value="confirmado">Confirmado</option>
-              <option value="cancelado">Cancelado</option>
-            </select>
-          </label>
-          <label>
-            Desde
-            <input type="date" id="filter-from" />
-          </label>
-          <label>
-            Hasta
-            <input type="date" id="filter-to" />
-          </label>
-          <button class="btn btn--ghost" id="reset-filters" data-action="reset-filters">Limpiar filtros</button>
-          <button class="btn btn--solid" id="refresh-turns" data-action="refresh-turns">Actualizar</button>
+        <div class="card" style="box-shadow:none;border:1px solid #e2e8f0;">
+          <strong>Turnos pendientes</strong>
+          <div id="summary-pending" style="font-size:28px;margin-top:6px;">0</div>
+          <div class="muted">Por confirmar</div>
         </div>
-        <div class="table-wrapper" style="margin-top:20px;">
-          <table class="admin-table" id="turns-table">
-            <thead>
-              <tr>
-                <th>Fecha</th>
-                <th>Hora</th>
-                <th>Paciente</th>
-                <th>Tipo</th>
-                <th>Profesional</th>
-                <th>Estado</th>
-                <th>Acciones</th>
-              </tr>
-            </thead>
-            <tbody id="turns-table-body">
-              <tr>
-                <td colspan="7" class="text-muted">Cargando información...</td>
-              </tr>
-            </tbody>
-          </table>
+        <div class="card" style="box-shadow:none;border:1px solid #e2e8f0;">
+          <strong>Profesionales</strong>
+          <div id="summary-pros" style="font-size:28px;margin-top:6px;">0</div>
         </div>
-      </section>
-
-      <div class="grid admin-split">
-        <section class="card">
-          <div class="section__heading" style="margin-bottom:12px;">
-            <span class="badge">Profesionales</span>
-            <h2 style="margin:0;">Equipo médico</h2>
-          </div>
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-            <p class="text-muted" style="margin:0;">Actualizá la lista para reflejar cambios desde Supabase.</p>
-            <button class="btn btn--ghost" data-action="refresh-pros" id="refresh-pros">Actualizar</button>
-          </div>
-          <div id="pros-list" class="list-panel text-muted">Cargando profesionales...</div>
-        </section>
-
-        <section class="card">
-          <div class="section__heading" style="margin-bottom:12px;">
-            <span class="badge">Tratamientos</span>
-            <h2 style="margin:0;">Catálogo activo</h2>
-          </div>
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-            <p class="text-muted" style="margin:0;">Sincronizá con Supabase para mantener el catálogo al día.</p>
-            <button class="btn btn--ghost" data-action="refresh-treatments" id="refresh-treatments">Actualizar</button>
-          </div>
-          <div id="treatments-list" class="list-panel text-muted">Cargando tratamientos...</div>
-        </section>
       </div>
-    </section>
-  </main>
+    </div>
 
-  <script type="module" src="./assets/js/admin.js"></script>
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <h2 style="margin:0;">Turnos</h2>
+        <div class="table-actions">
+          <select id="filter-status">
+            <option value="">Todos los estados</option>
+            <option value="pendiente">Pendiente</option>
+            <option value="confirmado">Confirmado</option>
+            <option value="cancelado">Cancelado</option>
+          </select>
+          <input type="date" id="filter-from" />
+          <input type="date" id="filter-to" />
+          <button id="refresh-turns" class="secondary">Actualizar</button>
+        </div>
+      </div>
+      <div style="overflow:auto;">
+        <table id="turns-table">
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Hora</th>
+              <th>Paciente</th>
+              <th>Tipo</th>
+              <th>Profesional</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td colspan="7" class="muted">Cargando...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+          <h2 style="margin:0;">Profesionales</h2>
+          <button id="refresh-pros" class="secondary">Actualizar</button>
+        </div>
+        <div id="pros-list" class="muted">Cargando...</div>
+      </div>
+
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+          <h2 style="margin:0;">Tratamientos</h2>
+          <button id="refresh-treatments" class="secondary">Actualizar</button>
+        </div>
+        <div id="treatments-list" class="muted">Cargando...</div>
+      </div>
+    </div>
+  </section>
+
+  <script type="module" src="assets/js/admin/app.js"></script>
 </body>
 </html>
 

@@ -2,259 +2,133 @@
 <html lang="es">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Clínica Moguz — Experiencia digital para cirugía plástica</title>
-  <meta name="description" content="Agenda digital, tratamientos y profesionales de Clínica Moguz. Nuevo frontend 2025 con flujos modernos, chatbot y conexión con Supabase." />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="./assets/css/main.css" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Clínica Moguz — Demo Frontend</title>
+  <meta name="description" content="Front-end demo para la Clínica Moguz: turnos, tratamientos, profesionales y chatbot (HTML/CSS/JS)." />
+  <link rel="stylesheet" href="assets/css/main.css" />
 </head>
 <body data-theme="light">
-  <header class="site-header">
-    <div class="container nav-inner">
-      <a href="#home" class="brand" id="brand-link" data-action="scroll-top">
-        <span class="brand__logo">CM</span>
-        <span class="brand__copy">
-          <span class="brand__title">Clínica Moguz</span>
-          <span class="brand__subtitle">Cirugía plástica • Reconstructiva • Estética</span>
-        </span>
+  <header>
+    <div class="nav-inner container">
+      <a href="#" class="brand" id="brand-link">
+        <div class="logo">CM</div>
+        <div>
+          <div style="font-weight:800">Clínica Moguz</div>
+          <div style="font-size:12px;color:var(--muted)">Cirugía plástica • Reconstructiva • Estética</div>
+        </div>
       </a>
 
-      <nav class="site-nav" aria-label="Navegación principal">
-        <button class="site-nav__toggle" id="nav-toggle" aria-expanded="false" aria-controls="nav-menu" data-action="toggle-nav">☰</button>
-        <div class="site-nav__menu" id="nav-menu">
-          <a href="#home" data-action="close-nav">Inicio</a>
-          <a href="#turnos" data-action="close-nav">Turnos</a>
-          <a href="#experiencia" data-action="close-nav">Experiencia</a>
-          <a href="#tratamientos" data-action="close-nav">Tratamientos</a>
-          <a href="#profesionales" data-action="close-nav">Profesionales</a>
-          <a href="#contacto" data-action="close-nav">Contacto</a>
-          <a href="admin.html" id="admin-link" hidden>Panel admin</a>
-        </div>
+      <nav aria-label="Navegación principal">
+        <a href="#home">Inicio</a>
+        <a href="#tratamientos">Tratamientos</a>
+        <a href="#profesionales">Profesionales</a>
+        <a href="#turnos">Turnos</a>
+        <a href="#contacto">Contacto</a>
+        <a href="admin.html" id="admin-link" style="display:none">Panel admin</a>
       </nav>
 
       <div class="nav-actions">
-        <select id="lang-select" class="nav-select" aria-label="Seleccionar idioma">
+        <select id="lang-select" aria-label="Seleccionar idioma">
           <option value="es">ES</option>
           <option value="en">EN</option>
         </select>
-        <button class="btn btn--icon" id="toggle-theme" data-action="toggle-theme" aria-label="Cambiar tema">🌓</button>
-        <button class="btn btn--solid" data-action="open-turn-modal" id="open-turn">Solicitar turno</button>
-        <button class="btn btn--ghost" data-action="open-auth" id="login-btn">Iniciar sesión</button>
-        <span id="user-status" class="text-muted"></span>
+        <button id="toggle-theme" title="Modo oscuro">🌓</button>
+        <button id="open-turn" class="btn btn-primary">Solicitar turno</button>
+        <button id="login-btn" class="btn btn-ghost" onclick="openLoginModal()">Iniciar sesión</button>
+        <span id="user-status" style="margin-left:10px;color:var(--muted);"></span>
       </div>
     </div>
   </header>
 
   <main class="container" id="home">
     <section class="hero" role="region" aria-labelledby="hero-title">
-      <div class="hero__content">
-        <span class="badge">Versión 2025 · Flujos rediseñados</span>
-        <h1 class="hero__title" id="hero-title">Cirugía plástica con acompañamiento digital de punta</h1>
-        <p class="hero__lede">
-          Coordiná turnos virtuales o presenciales, accedé a especialistas certificados y gestioná tus tratamientos desde una experiencia centrada en vos.
-        </p>
-        <div class="hero__cta">
-          <button class="btn btn--solid" data-action="open-turn-modal" id="hero-request">Reservar turno ahora</button>
-          <button class="btn btn--ghost" data-action="show-treatments" id="hero-treat">Explorar tratamientos</button>
+      <div class="content">
+        <h1 id="hero-title">Clínica Moguz — Excelencia en cirugía plástica y estética</h1>
+        <p>Atención personalizada, equipo profesional y tecnología de vanguardia. Pedí tu turno presencial o virtual con unos pocos pasos.</p>
+        <div class="cta">
+          <button class="btn btn-primary" id="hero-request">Solicitar turno ahora</button>
+          <button class="btn btn-ghost" id="hero-treat">Conocé nuestros tratamientos</button>
         </div>
 
-        <div class="hero__meta">
-          <div class="metrics">
-            <div class="metrics__item">
-              <span class="metrics__value">+1.500</span>
-              <span class="metrics__label">Pacientes felices</span>
-            </div>
-            <div class="metrics__item">
-              <span class="metrics__value">96%</span>
-              <span class="metrics__label">Satisfacción promedio</span>
-            </div>
-            <div class="metrics__item">
-              <span class="metrics__value">24hs</span>
-              <span class="metrics__label">Confirmación de turnos</span>
-            </div>
-          </div>
-          <div>
-            <h3 style="margin:8px 0;">Próximos turnos</h3>
-            <div id="next-turns"></div>
-          </div>
+        <div style="margin-top:30px"> 
+          <h3>Próximos turnos</h3>
+          <div id="next-turns"></div>
         </div>
       </div>
 
-      <div class="hero__media" aria-hidden="true">
-        <img src="https://static.vecteezy.com/ti/fotos-gratis/t2/45677420-laser-tratamento-cosmetico-salao-interior-foto.jpg" alt="Recepción luminosa de la clínica Moguz" loading="lazy" />
+      <div class="media" aria-hidden="true">
+        <img src="https://static.vecteezy.com/ti/fotos-gratis/t2/45677420-laser-tratamento-cosmetico-salao-interior-foto.jpg" alt="Recepción clínica" style="width:100%;height:100%;object-fit:cover;border-radius:var(--radius-lg)"/>
       </div>
     </section>
 
-    <section class="section section--decorated" id="turnos" aria-labelledby="turnos-title">
-      <div class="section__heading">
-        <span class="badge">Turnos inteligentes</span>
-        <h2 id="turnos-title">Gestioná tus turnos sin fricción</h2>
-        <p>Agenda online 24/7, confirmaciones en tiempo real, recordatorios automáticos y posibilidad de reprogramar con un clic.</p>
-      </div>
-      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
-        <div class="chip-list">
-          <span class="chip">Confirmación por correo</span>
-          <span class="chip">Agenda sincronizada</span>
-          <span class="chip">Videoconsultas disponibles</span>
-          <span class="chip">Recordatorios automatizados</span>
-        </div>
-        <div style="display:flex;gap:10px;flex-wrap:wrap;">
-          <button class="btn btn--ghost" data-action="show-my-turns" id="my-turns-btn">Mis turnos</button>
-          <button class="btn btn--ghost" data-action="show-history" id="history-btn">Historial</button>
+    <section id="turnos" style="margin-top:30px"> 
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <h2>Turnos</h2>
+        <div>
+          <button class="btn btn-ghost" id="my-turns-btn">Mis turnos</button> 
+          <button class="btn btn-ghost" id="history-btn">Historial</button> 
         </div>
       </div>
-      <div id="turns-table-area"></div>
+
+      <div style="margin-top:16px" id="turns-table-area">
+        </div>
     </section>
 
-    <section class="section section--tight" id="experiencia" aria-labelledby="experiencia-title">
-      <div class="section__heading">
-        <span class="badge">Proceso guiado</span>
-        <h2 id="experiencia-title">Tu experiencia en cuatro pasos</h2>
-        <p>Un recorrido que combina asesoramiento humano y automatizaciones para que cada consulta sea fluida y personalizada.</p>
+    <section id="tratamientos" style="margin-top:40px"> 
+      <h2>Tratamientos y Servicios</h2>
+      <div style="margin:12px 0;display:flex;gap:12px"> 
+        <input id="t-search" placeholder="Buscar por nombre o especialidad" aria-label="Buscar tratamientos" style="flex:1" /> 
+        <button id="t-search-btn" class="btn btn-primary">Buscar</button> 
       </div>
-      <div class="stepper">
-        <article class="stepper__item">
-          <span class="stepper__index">1</span>
-          <h3 class="stepper__title">Diagnóstico digital</h3>
-          <p class="text-muted">Completá un pre-diagnóstico guiado y subí tus estudios en un entorno seguro.</p>
-        </article>
-        <article class="stepper__item">
-          <span class="stepper__index">2</span>
-          <h3 class="stepper__title">Match con especialistas</h3>
-          <p class="text-muted">Elegí fecha, modalidad y profesional según la especialidad que necesites.</p>
-        </article>
-        <article class="stepper__item">
-          <span class="stepper__index">3</span>
-          <h3 class="stepper__title">Acompañamiento 360°</h3>
-          <p class="text-muted">Recordatorios proactivos, checklist pre-quirúrgico y seguimiento post operatorio.</p>
-        </article>
-        <article class="stepper__item">
-          <span class="stepper__index">4</span>
-          <h3 class="stepper__title">Insights en tiempo real</h3>
-          <p class="text-muted">Accedé a tus informes, evolución y materiales educativos desde tu portal.</p>
-        </article>
-      </div>
-    </section>
 
-    <section class="section" id="tratamientos" aria-labelledby="tratamientos-title">
-      <div class="section__heading">
-        <span class="badge">Tratamientos destacados</span>
-        <h2 id="tratamientos-title">Elegí el plan correcto para vos</h2>
-        <p>Tratamientos personalizados con tecnología premium y especialistas que te acompañan durante todo el proceso.</p>
-      </div>
-      <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
-        <label class="sr-only" for="t-search">Buscar tratamientos</label>
-        <input id="t-search" placeholder="Buscar por nombre o especialidad" aria-label="Buscar tratamientos" style="flex:1;min-width:220px;" />
-        <button class="btn btn--solid" id="t-search-btn">Buscar</button>
-      </div>
       <div class="grid" id="treatments-grid" aria-live="polite"></div>
     </section>
 
-    <section class="section section--tight" id="profesionales" aria-labelledby="profesionales-title">
-      <div class="section__heading">
-        <span class="badge">Equipo médico</span>
-        <h2 id="profesionales-title">Profesionales certificados y multidisciplina</h2>
-        <p>Un equipo con trayectoria internacional y foco en resultados seguros y naturales.</p>
-      </div>
-      <div class="grid" id="professionals-grid" aria-live="polite"></div>
+    <section id="profesionales" style="margin-top:40px"> 
+      <h2>Profesionales</h2>
+      <div class="grid" id="professionals-grid"></div>
     </section>
 
-    <section class="section section--decorated" id="insights" aria-labelledby="insights-title">
-      <div class="layout-split">
-        <div>
-          <div class="section__heading">
-            <span class="badge">Dashboard clínico</span>
-            <h2 id="insights-title">Datos accionables para tus decisiones</h2>
-            <p>El panel de pacientes y el dashboard administrativo trabajan juntos para mantenerte informado y agilizar la gestión interna.</p>
-          </div>
-          <div class="chip-list" style="margin-top:12px;">
-            <span class="chip">KPIs en vivo</span>
-            <span class="chip">Alertas críticas</span>
-            <span class="chip">Workflows automatizados</span>
-          </div>
+    <section id="contacto" style="margin-top:40px"> 
+      <h2>Contacto</h2>
+      <div class="card" style="display:flex;gap:20px;align-items:center"> 
+        <div style="flex:1">
+          <p>Dirección: España 1115, Corrientes</p>
+          <p>Tel: (+54) 9 11 5754-2448 • Instagram: moguz6040</p>
+          <p>Horarios: Lun-mier 8:00 - 20:00</p>
         </div>
-        <div class="insights">
-          <article class="insight">
-            <h3 class="insight__title">Indicadores diarios</h3>
-            <p class="text-muted">Monitoreo de ocupación de quirófanos, pacientes activos y tareas pendientes en tiempo real.</p>
-          </article>
-          <article class="insight">
-            <h3 class="insight__title">Flujos omnicanal</h3>
-            <p class="text-muted">Integraciones con correo, WhatsApp Business y calendario para una experiencia consistente.</p>
-          </article>
-          <article class="insight">
-            <h3 class="insight__title">Seguridad y cumplimiento</h3>
-            <p class="text-muted">Accesos auditables, cifrado de extremo a extremo y backups automáticos.</p>
-          </article>
+        <div style="width:320px"> 
+          <form id="contact-form">
+            <input name="name" placeholder="Nombre" required style="margin-bottom:8px" />
+            <input name="email" placeholder="Email" required style="margin-bottom:8px" />
+            <textarea name="msg" rows="3" placeholder="Consulta" required style="width:100%;padding:12px;border-radius:var(--radius-md)"></textarea> 
+            <div style="text-align:right;margin-top:10px">
+              <button class="btn btn-primary" type="submit">Enviar consulta</button>
+            </div>
+          </form>
         </div>
       </div>
     </section>
 
-    <section class="section section--decorated section--accent" id="contacto" aria-labelledby="contacto-title">
-      <div class="section__heading">
-        <span class="badge">Contacto directo</span>
-        <h2 id="contacto-title">Coordinemos tu próxima consulta</h2>
-        <p>Escribinos y te responderemos en menos de 24 horas con disponibilidad y recomendaciones personalizadas.</p>
-      </div>
-      <div class="contact-card card">
+    <footer>
+      <div style="display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap"> 
         <div>
-          <h3>Clínica Moguz</h3>
-          <p class="text-muted">España 1115, Corrientes</p>
-          <p class="text-muted">Tel: (+54) 9 11 5754-2448 · Instagram: @moguz6040</p>
-          <p class="text-muted">Horarios: Lunes a miércoles de 08:00 a 20:00</p>
+          <strong>Clínica Moguz</strong>
+          <div style="color:var(--muted);font-size:13px;margin-top:6px">España 1115 • +54 91157542448 • Clinicamoguz@gmail.com</div>
         </div>
-        <form id="contact-form">
-          <label>
-            <span class="text-muted" style="font-size:0.85rem;">Nombre</span>
-            <input name="name" placeholder="Tu nombre" required />
-          </label>
-          <label>
-            <span class="text-muted" style="font-size:0.85rem;">Email</span>
-            <input name="email" type="email" placeholder="tucorreo@ejemplo.com" required />
-          </label>
-          <label>
-            <span class="text-muted" style="font-size:0.85rem;">Consulta</span>
-            <textarea name="msg" rows="4" placeholder="Contanos qué necesitás" required></textarea>
-          </label>
-          <div style="text-align:right;">
-            <button class="btn btn--solid" type="submit">Enviar consulta</button>
-          </div>
-        </form>
+        <div style="color:var(--muted)"> Turnos • Tratamientos • Contacto</div>
+        <div style="color:var(--muted)">Políticas: Privacidad • T&C</div>
       </div>
-    </section>
+    </footer>
+
   </main>
 
-  <footer>
-    <div class="container footer__content">
-      <div class="footer__brand">
-        <strong>Clínica Moguz</strong>
-        <div class="text-muted">España 1115 · Corrientes</div>
-        <div class="text-muted">+54 9 11 5754-2448 · clinicamoguz@gmail.com</div>
-      </div>
-      <div class="footer__links">
-        <span>Turnos online</span>
-        <span>Tratamientos</span>
-        <span>Portal pacientes</span>
-      </div>
-      <div class="footer__meta">
-        <span>Políticas de privacidad</span>
-        <span>Términos y condiciones</span>
-        <span>© <span id="current-year"></span> Clínica Moguz</span>
-      </div>
-    </div>
-  </footer>
-
   <div id="modal-root" aria-live="polite"></div>
-  <div id="login-modal-root"></div>
-  <div id="chat-root"></div>
-  <div id="toast-root" class="toast-stack"></div>
 
-  <script>
-    document.getElementById("current-year").textContent = new Date().getFullYear();
-  </script>
-  <script type="module" src="./assets/js/app.js"></script>
+  <div id="login-modal-root"></div>
+
+  <div id="chat-root"></div>
+
+  <script type="module" src="assets/js/app.js"></script>
 </body>
 </html>
-
