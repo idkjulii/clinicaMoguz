@@ -26,14 +26,14 @@ export function openTurnModal({
 } = {}) {
   if (!turnModalRoot) return;
 
-  if (!isSupabaseAvailable) {
-    window.alert('Necesitás la base de datos activa para gestionar turnos.');
-    return;
-  }
-
   if (!isUserLogged) {
     window.alert('Iniciá sesión para solicitar turnos.');
     if (typeof onRequireAuth === 'function') onRequireAuth();
+    return;
+  }
+
+  if (!isSupabaseAvailable) {
+    window.alert('Activá la base de datos o habilitá el modo demo para gestionar turnos.');
     return;
   }
 
@@ -129,7 +129,7 @@ export function openTurnModal({
   );
 }
 
-export function openLoginModal({ onSubmit } = {}) {
+export function openLoginModal({ onSubmit, onDemoLogin } = {}) {
   if (!loginModalRoot) return;
 
   loginModalRoot.innerHTML = `
@@ -146,10 +146,16 @@ export function openLoginModal({ onSubmit } = {}) {
           <div style="color:var(--muted);font-size:12px;margin-bottom:15px">
             Te enviaremos un enlace mágico a este correo para iniciar sesión al instante.
           </div>
-          <div style="display:flex;justify-content:flex-end;align-items:center;margin-top:15px">
-            <button type="button" data-close-login class="btn btn-ghost">Cancelar</button>
-            <button type="submit" class="btn btn-primary" style="margin-left:10px">Enviar enlace</button>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:15px;flex-wrap:wrap;gap:12px">
+            <button type="button" data-demo-login class="btn btn-ghost">Modo demo</button>
+            <div style="display:flex;gap:10px">
+              <button type="button" data-close-login class="btn btn-ghost">Cancelar</button>
+              <button type="submit" class="btn btn-primary">Enviar enlace</button>
+            </div>
           </div>
+          <small style="display:block;margin-top:6px;color:var(--muted);font-size:12px">
+            El modo demo crea una sesión local sin correo y guarda los datos únicamente en este dispositivo.
+          </small>
         </form>
       </div>
     </div>
@@ -168,6 +174,15 @@ export function openLoginModal({ onSubmit } = {}) {
       onSubmit(email);
     }
   });
+
+  const demoBtn = loginModalRoot.querySelector('[data-demo-login]');
+  if (demoBtn) {
+    demoBtn.addEventListener('click', () => {
+      if (typeof onDemoLogin === 'function') {
+        onDemoLogin();
+      }
+    });
+  }
 
   loginModalRoot.querySelectorAll('[data-close-login]').forEach((btn) =>
     btn.addEventListener('click', () => {

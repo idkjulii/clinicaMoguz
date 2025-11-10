@@ -1,4 +1,11 @@
 import { supabase, hasSupabase } from './supabaseClient.js';
+import {
+  listLocalTurns,
+  listLocalTurnsByUser,
+  addLocalTurn,
+  updateLocalTurn,
+  deleteLocalTurn,
+} from './localData.js';
 
 export async function fetchTreatments() {
   if (!hasSupabase) return [];
@@ -25,7 +32,10 @@ export async function fetchProfessionals() {
 }
 
 export async function fetchClientTurns(userId) {
-  if (!hasSupabase || !userId) return [];
+  if (!userId) return [];
+  if (!hasSupabase) {
+    return listLocalTurnsByUser(userId);
+  }
   try {
     const { data, error } = await supabase
       .from('turns')
@@ -43,7 +53,9 @@ export async function fetchClientTurns(userId) {
 }
 
 export async function fetchTurns(filters = {}) {
-  if (!hasSupabase) return [];
+  if (!hasSupabase) {
+    return listLocalTurns(filters);
+  }
   try {
     let query = supabase.from('turns').select('*').order('date', { ascending: true }).order('time', { ascending: true });
     if (filters.user_id) query = query.eq('user_id', filters.user_id);
@@ -61,8 +73,8 @@ export async function fetchTurns(filters = {}) {
 
 export async function saveTurnDB(turn) {
   if (!hasSupabase) {
-    console.warn('Supabase no disponible: el turno se mantiene en memoria.');
-    return { error: null, skipped: true };
+    const data = addLocalTurn(turn);
+    return { error: null, data, skipped: true };
   }
   try {
     const { data, error } = await supabase.from('turns').insert([turn]).select('*').maybeSingle();
@@ -74,7 +86,10 @@ export async function saveTurnDB(turn) {
 }
 
 export async function updateTurnDB(id, payload) {
-  if (!hasSupabase) return { error: new Error('Supabase inactivo') };
+  if (!hasSupabase) {
+    const updated = updateLocalTurn(id, payload);
+    return updated ? { error: null, data: updated } : { error: new Error('Turno no encontrado') };
+  }
   try {
     const { error } = await supabase.from('turns').update(payload).eq('id', id);
     if (error) throw error;
@@ -85,7 +100,10 @@ export async function updateTurnDB(id, payload) {
 }
 
 export async function deleteTurnDB(id) {
-  if (!hasSupabase) return { error: new Error('Supabase inactivo') };
+  if (!hasSupabase) {
+    const result = deleteLocalTurn(id);
+    return result instanceof Error ? { error: result } : { error: null };
+  }
   try {
     const { error } = await supabase.from('turns').delete().eq('id', id);
     if (error) throw error;

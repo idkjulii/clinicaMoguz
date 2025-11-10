@@ -14,6 +14,7 @@ import { getState, setState, subscribe } from './state/store.js';
 import { renderTreatments, renderProfessionals, renderNextTurns, renderTurnsTable } from './ui/renderers.js';
 import { initChatbot } from './ui/chatbot.js';
 import { configureModals, openTurnModal, closeTurnModal, openLoginModal, closeLoginModal } from './ui/modals.js';
+import { saveLocalSession, loadLocalSession, clearLocalSession } from './services/localSession.js';
 
 const dom = {
   body: document.body,
@@ -51,6 +52,25 @@ function initState() {
 
 function normalizeId(value) {
   return value !== null && value !== undefined ? String(value) : '';
+}
+
+function isLocalSessionActive() {
+  const session = getState().session;
+  return session?.user?.app_metadata?.provider === 'local';
+}
+
+function isSchedulingEnabled() {
+  return hasSupabase || isLocalSessionActive();
+}
+
+function activateLocalSession(email, role = 'client') {
+  const safeEmail = email && email.includes('@') ? email : 'demo@clinicamoguz.com';
+  const displayName = safeEmail.split('@')[0] || 'Usuario';
+  const { session, profile } = saveLocalSession({ email: safeEmail, role, fullName: displayName });
+  setState({ session, profile });
+  closeLoginModal();
+  refreshClientTurns();
+  window.alert('Sesión iniciada en modo demo local. Tus turnos se guardarán sólo en este dispositivo.');
 }
 
 function findTreatment(identifier) {
@@ -95,11 +115,6 @@ async function refreshClientTurns() {
 
 function updateNextTurnsUI(state) {
   if (!dom.nextTurns) return;
-  if (!hasSupabase) {
-    dom.nextTurns.innerHTML =
-      '<div style="color:var(--muted);padding:10px;border:1px dashed var(--muted);border-radius:var(--radius-md);margin-top:10px">Conectate a Supabase para ver tus próximos turnos.</div>';
-    return;
-  }
   if (!state.session) {
     dom.nextTurns.innerHTML =
       '<div style="color:var(--muted);padding:10px;border:1px dashed var(--muted);border-radius:var(--radius-md);margin-top:10px">Iniciá sesión para ver tus próximos turnos.</div>';
@@ -109,21 +124,24 @@ function updateNextTurnsUI(state) {
   renderNextTurns(dom.nextTurns, upcoming, {
     emptyMessageNoData: 'No hay turnos próximos',
   });
+  if (!hasSupabase) {
+    dom.nextTurns.innerHTML +=
+      '<div style="margin-top:6px;color:var(--muted);font-size:12px">Modo demo activo: los turnos sólo se guardan localmente.</div>';
+  }
 }
 
 function updateTurnsTableUI(state) {
   if (!dom.turnsTableArea) return;
-  if (!hasSupabase) {
-    dom.turnsTableArea.innerHTML =
-      '<div style="color:var(--muted);padding:10px;border:1px dashed var(--muted);border-radius:var(--radius-md)">Conectá Supabase para gestionar turnos.</div>';
-    return;
-  }
   if (!state.session) {
     dom.turnsTableArea.innerHTML =
       '<div style="color:var(--muted);padding:10px;border:1px dashed var(--muted);border-radius:var(--radius-md)">Iniciá sesión para ver y administrar tus turnos.</div>';
     return;
   }
   renderTurnsTable(dom.turnsTableArea, state.turns);
+  if (!hasSupabase) {
+    dom.turnsTableArea.innerHTML +=
+      '<div style="margin-top:10px;color:var(--muted);font-size:12px;text-align:center">Modo demo: la información vive en este navegador.</div>';
+  }
 }
 
 function wireStoreSubscriptions() {
@@ -150,22 +168,23 @@ function wireStoreSubscriptions() {
 
 function syncUserStatus(state) {
   if (!dom.userStatus || !dom.loginBtn) return;
-  if (!hasSupabase) {
-    dom.userStatus.textContent = '';
-    dom.loginBtn.style.display = '';
-    return;
-  }
-  if (state.session && state.profile) {
+  const session = state.session;
+  if (session && state.profile) {
     const displayName =
       state.profile.full_name ||
-      state.session.user?.user_metadata?.full_name ||
-      (state.session.user?.email ? state.session.user.email.split('@')[0] : 'Usuario');
+      session.user?.user_metadata?.full_name ||
+      (session.user?.email ? session.user.email.split('@')[0] : 'Usuario');
     dom.userStatus.innerHTML = `Bienvenido, <strong>${displayName}</strong> <button id="logout-btn" class="btn btn-ghost" style="margin-left:8px">Cerrar sesión</button>`;
     dom.loginBtn.style.display = 'none';
 
     const logoutBtn = document.getElementById('logout-btn');
     logoutBtn?.addEventListener('click', async () => {
-      await supabase?.auth.signOut();
+      if (session.user?.app_metadata?.provider === 'local' || !hasSupabase) {
+        clearLocalSession();
+        setState({ session: null, profile: null, turns: [] });
+      } else {
+        await supabase?.auth.signOut();
+      }
     });
   } else {
     dom.userStatus.textContent = '';
@@ -212,7 +231,7 @@ function openTurnFlow({ specialty, professional, date, time, patient } = {}) {
   openTurnModal({
     professionals,
     values: { specialty, professional, date, time, patient },
-    isSupabaseAvailable: hasSupabase,
+    isSupabaseAvailable: isSchedulingEnabled(),
     isUserLogged: Boolean(getState().session),
     onRequireAuth: () => handleOpenLoginModal(),
     onSubmit: async (payload) => {
@@ -260,41 +279,66 @@ function handleOpenTurnWithProfessional(identifier) {
 }
 
 function handleOpenLoginModal() {
-  if (!hasSupabase) {
-    window.alert('La autenticación no está disponible en este entorno. Contactanos para gestionar tu acceso.');
-    return;
-  }
-
   openLoginModal({
     onSubmit: async (email) => {
-      const { error } = await supabase.auth.signInWithOtp({ email });
+      if (!hasSupabase || window.location.protocol === 'file:') {
+        activateLocalSession(email);
+        return;
+      }
+      const { error } = await supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: window.location.href } });
       if (error) {
         console.error('Error enviando Magic Link:', error);
-        window.alert('Error al enviar el enlace. Verificá tu correo o la configuración de Supabase.');
+        const useDemo = window.confirm(
+          'No pudimos enviar el enlace mágico. ¿Querés iniciar sesión en modo demo local (sin correo)?',
+        );
+        if (useDemo) {
+          activateLocalSession(email);
+        } else {
+          window.alert('Verificá tu correo o la configuración de Supabase e intentá nuevamente.');
+        }
       } else {
         window.alert(`Enlace mágico enviado a ${email}. Revisá tu bandeja de entrada y la carpeta de spam.`);
         closeLoginModal();
       }
     },
+    onDemoLogin: () => {
+      const input = window.prompt('Ingresá un correo para la sesión demo:', 'demo@clinicamoguz.com');
+      const email = (input || '').trim() || 'demo@clinicamoguz.com';
+      activateLocalSession(email);
+    },
   });
 }
 
 async function renderAuthStatus() {
-  if (!hasSupabase) {
-    setState({ session: null, profile: null });
-    return;
-  }
-  try {
-    const session = await getCurrentSession();
-    if (!session) {
-      setState({ session: null, profile: null, turns: [] });
-      return;
+  let sessionData = null;
+
+  if (hasSupabase) {
+    try {
+      const session = await getCurrentSession();
+      if (session) {
+        const profile = (await ensureProfile(session)) || {
+          id: session.user.id,
+          full_name: session.user.user_metadata?.full_name || session.user.email || 'Usuario',
+          role: 'client',
+        };
+        sessionData = { session, profile };
+      }
+    } catch (error) {
+      console.error('Error obteniendo sesión de Supabase:', error);
     }
-    const profile = await ensureProfile(session);
-    setState({ session, profile });
+  }
+
+  if (!sessionData) {
+    const local = loadLocalSession();
+    if (local?.session && local?.profile) {
+      sessionData = local;
+    }
+  }
+
+  if (sessionData) {
+    setState({ session: sessionData.session, profile: sessionData.profile });
     await refreshClientTurns();
-  } catch (error) {
-    console.error('Error obteniendo sesión de Supabase:', error);
+  } else {
     setState({ session: null, profile: null, turns: [] });
   }
 }
@@ -397,7 +441,7 @@ function wireEventListeners() {
           time: turn.time,
           patient: turn.patient,
         },
-        isSupabaseAvailable: hasSupabase,
+        isSupabaseAvailable: isSchedulingEnabled(),
         isUserLogged: Boolean(getState().session),
         onRequireAuth: () => handleOpenLoginModal(),
         onSubmit: async (payload) => {
